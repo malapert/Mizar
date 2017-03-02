@@ -540,8 +540,8 @@ define(["jquery", "underscore-min",
         MizarCore.prototype.setCoordinateSystem = function (newCoordSystem) {
             this.scene.coordinateSystem.type = newCoordSystem;
 
-            if (this.mollweideViewer) {
-                this.mollweideViewer.setCoordSystem(newCoordSystem);
+            if (this.mizarGlobal.mizarWidgetGui.mollweideViewer) {
+                this.mizarGlobal.mizarWidgetGui.mollweideViewer.setCoordSystem(newCoordSystem);
             }
 
             // Publish modified event to update compass north
