@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: gui/LayerManagerView.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: gui/LayerManagerView.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*******************************************************************************
+ * Copyright 2012-2015 CNES - CENTRE NATIONAL d'ETUDES SPATIALES
+ *
+ * This file is part of SITools2.
+ *
+ * SITools2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SITools2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SITools2. If not, see &lt;http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+/*global define: false */
+
+/**
+ * Layer manager view module
+ */
+define(["jquery", "underscore-min", "layer/LayerManager", "Utils", "gui_core/dialog/ErrorDialog", "./LayerServiceView", "./BackgroundLayersView", "./AdditionalLayersView", "gui_core/ImageManagerCore", "./ImageProcessing", "jquery.ui"],
+    function ($, _, LayerManager, Utils, ErrorDialog, LayerServiceView, BackgroundLayersView, AdditionalLayersView, ImageManagerCore, ImageProcessing) {
+
+        /**
+         * Private variables
+         */
+        var mizarCore;
+        var configuration;
+
+        // GeoJSON data providers
+        var votable2geojsonBaseUrl;
+        var parentElement;
+        var $el;
+
+
+        /**
+         * Private functions
+         */
+
+        /**************************************************************************************************************/
+
+        /**
+         *    Drop event
+         */
+        function handleDrop(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+
+            var files = evt.dataTransfer.files; // FileList object.
+
+            // Files is a FileList of File objects.
+            loadLayersFromFITSFile(files);
+        }
+
+        function loadLayersFromFITSFile(files) {
+            $.each(files, function (index, f) {
+
+                var name = f.name;
+                var reader = new FileReader();
+                $('#loading').show();
+
+                if (f.type === "image/fits") {
+                    // Handle fits image
+                    reader.onloadend = function (e) {
+                        var arrayBuffer = this.result;
+                        var fits = ImageManagerCore.parseFits(arrayBuffer);
+
+                        var gwLayer = LayerManager.createLayerFromFits(name, fits);
+
+                        // Add fits texture
+                        var featureData = {
+                            layer: gwLayer,
+                            feature: gwLayer.features[0],
+                            isFits: true
+                        };
+                        var fitsData = fits.getHDU().data;
+                        mizarCore.publish("image:add", featureData);
+
+                        var image = ImageManagerCore.handleFits(fitsData, featureData);
+                        ImageProcessing.setImage(image);
+
+                        $('#loading').hide();
+                    };
+                    reader.readAsArrayBuffer(f);
+                }
+                else {
+                    reader.onloadend = function (e) {
+                        if (this.result.search('&lt;?xml') > 0) {
+                            // Handle xml votable
+                            Utils.convertVotable2JsonFromXML(this.result, function (response) {
+                                var gwLayer = LayerManager.createLayerFromGeoJson(name, response);
+                                $('#loading').hide();
+                            });
+                        }
+                        else {
+                            // Handle as json if possible
+                            var response;
+                            try {
+                                response = $.parseJSON(this.result);
+                                LayerManager.createLayerFromGeoJson(name, response);
+                                $('#loading').hide();
+                            } catch (e) {
+                                ErrorDialog.open("JSON parsing error : " + e.type + "&lt;br/> For more details see http://jsonlint.com/.");
+                                $('#loading').hide();
+                                return false;
+                            }
+                        }
+                    };
+                    reader.readAsText(f);
+                }
+            });
+        }
+
+        /**************************************************************************************************************/
+
+        /**
+         *    Drag over event
+         */
+        function handleDragOver(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+            evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+        }
+
+        /**************************************************************************************************************/
+
+        /**
+         *    Initialize view with layers stored in &lt;LayerManager>
+         */
+        function initLayers() {
+            var layers = LayerManager.getLayers("sky");
+
+            // Add view depending on category of each layer
+            for (var i = 0; i &lt; layers.length; i++) {
+                var layer = layers[i];
+                if (layer.category === "background") {
+                    BackgroundLayersView.addView(layer);
+                }
+                else {
+                    AdditionalLayersView.addView(layer);
+                }
+            }
+        }
+
+        /**************************************************************************************************************/
+
+        /**
+         *    Init background layer only from the given planet layer
+         */
+        function initPlanetLayer(planetLayer) {
+            // Add planet WMS background layers
+            for (var i = 0; i &lt; planetLayer.baseImageries.length; i++) {
+                var layer = planetLayer.baseImageries[i];
+                BackgroundLayersView.addView(layer);
+            }
+
+            // Add additional layers stored on the given planet layer
+            for (var i = 0; i &lt; planetLayer.layers.length; i++) {
+                var layer = planetLayer.layers[i];
+                AdditionalLayersView.addView(layer);
+            }
+        }
+
+        /**************************************************************************************************************/
+
+        return {
+
+            /**
+             *    Init
+             *
+             *    @param m
+             *        Mizar API object
+             *    @param conf
+             *        Mizar configuration
+             */
+            init: function (m, conf) {
+                mizarCore = m;
+                configuration = conf;
+                parentElement = configuration.element;
+                // Add invoker
+                $('&lt;input type="button" id="lmInvoker" />').appendTo(parentElement);
+                $el = $('&lt;div id="accordion" style="display: none;">&lt;/div>').appendTo(parentElement);
+                configuration.element = $el;
+
+                BackgroundLayersView.init({mizar: mizarCore, configuration: configuration});
+                AdditionalLayersView.init({mizar: mizarCore, configuration: configuration});
+
+                mizarCore.subscribe("backgroundLayer:add", BackgroundLayersView.addView);
+                mizarCore.subscribe("additionalLayer:add", AdditionalLayersView.addView);
+                mizarCore.subscribe("mizarMode:toggle", this.toggleMode);
+
+                // Necessary to drag&amp;drop option while using jQuery
+                $.event.props.push('dataTransfer');
+
+                // Due to scroll initialization which corrumps accordion UI init in additional layers view,
+                // accordion UI must be initialized before
+                $el.accordion({
+                    header: "> div > h3",
+                    autoHeight: false,
+                    active: 0,
+                    collapsible: true,
+                    heightStyle: "content"
+                }).show().accordion("refresh");
+
+                initLayers();
+                LayerServiceView.init(mizarCore, configuration);
+
+                // Setup the drag &amp; drop listeners.
+                $('canvas').on('dragover', handleDragOver);
+                $('canvas').on('drop', handleDrop);
+
+                // Layer manager invoker onclick animations
+                $('#lmInvoker').click(function () {
+                    if (parseFloat($(this).siblings('#accordion').css('left')) &lt; 0) {
+                        // Show layer manager
+                        $(this).animate({left: '-10px'}, 300).addClass('selected');
+                        $(this).siblings('#accordion').animate({left: '15px'}, 300);
+                    }
+                    else {
+                        // Hide layer manager
+                        $(this).animate({left: '0px'}, 300).removeClass('selected');
+                        $(this).siblings('#accordion').animate({left: '-255px'}, 300);
+                    }
+                });
+
+                if (!configuration.isMobile) {
+                    $('#lmInvoker').trigger("click");
+                }
+
+                if (configuration.votable2geojson) {
+                    votable2geojsonBaseUrl = configuration.votable2geojson.baseUrl;
+                }
+            },
+
+            /**
+             *    Unregister all event handlers and remove view
+             */
+            remove: function () {
+                AdditionalLayersView.remove();
+                BackgroundLayersView.remove();
+                LayerServiceView.remove();
+                $(parentElement).empty();
+
+                mizarCore.unsubscribe("backgroundLayer:add", BackgroundLayersView.addView);
+                mizarCore.unsubscribe("additionalLayer:add", AdditionalLayersView.addView);
+                mizarCore.unsubscribe("mizarMode:toggle", this.toggleMode);
+                $('canvas').off('dragover', handleDragOver);
+                $('canvas').off('drop', handleDrop);
+            },
+
+            /**
+             *    Update view depending on mizarCore mode
+             *
+             *    @param planetLayer
+             *        Planet layer if toggled in globe mode
+             */
+            toggleMode: function (planetLayer) {
+                if (mizarCore.mode === "sky") {
+                    // Reinit background&amp;additional views
+                    BackgroundLayersView.remove();
+                    AdditionalLayersView.remove();
+                    BackgroundLayersView.init({mizar: mizarCore, configuration: configuration});
+                    AdditionalLayersView.init({mizar: mizarCore, configuration: configuration});
+                    initLayers();
+                }
+                else {
+                    // Reinit only background layers view for the given planet layer
+                    BackgroundLayersView.remove();
+                    AdditionalLayersView.remove();
+                    BackgroundLayersView.init({mizar: mizarCore, configuration: configuration});
+                    AdditionalLayersView.init({mizar: mizarCore, configuration: configuration});
+                    initPlanetLayer(planetLayer);
+                }
+                $el.accordion("option", "active", 0).accordion("refresh");
+            },
+
+            /**
+             *    Returns the state of view
+             */
+            isInitialized: function () {
+                return (mizarCore.scene !== null)
+            }
+        };
+
+    });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DynamicImageView%2520constructor%250A%2520%2520%2520Creates%2520jQuery%2520view%2520of%2520the%2520given%2520_GlobWeb.DynamicImage_.html">DynamicImageView constructor
+   Creates jQuery view of the given <GlobWeb.DynamicImage></a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#addImage">addImage</a></li><li><a href="global.html#addLayer">addLayer</a></li><li><a href="global.html#addPickableLayer">addPickableLayer</a></li><li><a href="global.html#addProgressBar">addProgressBar</a></li><li><a href="global.html#addService">addService</a></li><li><a href="global.html#addView">addView</a></li><li><a href="global.html#createHelp">createHelp</a></li><li><a href="global.html#deactivate">deactivate</a></li><li><a href="global.html#focusFeature">focusFeature</a></li><li><a href="global.html#hide">hide</a></li><li><a href="global.html#hideImage">hideImage</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#isInitialized">isInitialized</a></li><li><a href="global.html#onModeToggle">onModeToggle</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#removeImage">removeImage</a></li><li><a href="global.html#removeLayer">removeLayer</a></li><li><a href="global.html#removePickableLayer">removePickableLayer</a></li><li><a href="global.html#removeService">removeService</a></li><li><a href="global.html#removeView">removeView</a></li><li><a href="global.html#selectLayer">selectLayer</a></li><li><a href="global.html#setContext">setContext</a></li><li><a href="global.html#show">show</a></li><li><a href="global.html#showImage">showImage</a></li><li><a href="global.html#toggleMode">toggleMode</a></li><li><a href="global.html#unregisterEvents">unregisterEvents</a></li><li><a href="global.html#updateContext">updateContext</a></li><li><a href="global.html#updateUI">updateUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Aug 26 2016 10:13:35 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

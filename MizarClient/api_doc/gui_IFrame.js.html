@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: gui/IFrame.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: gui/IFrame.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*******************************************************************************
+ * Copyright 2012-2015 CNES - CENTRE NATIONAL d'ETUDES SPATIALES
+ *
+ * This file is part of SITools2.
+ *
+ * SITools2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SITools2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SITools2. If not, see &lt;http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+/*global define: false */
+
+/**
+ * IFrame module : popup appearing when clicking on external link
+ */
+define(["jquery"], function ($) {
+
+    var iframe =
+        '&lt;div id="externalIFrame" class="contentBox">\
+            &lt;div id="IFrameToolbar" class="ui-widget-header ui-widget-header ui-corner-all">\
+              &lt;button id="previous">Previous page&lt;/button>\
+              &lt;button id="next">Next page&lt;/button>\
+            &lt;/div>\
+            &lt;div class="closeBtn">\
+                &lt;span class="defaultImg">&lt;/span>\
+                &lt;span style="opacity: 0" class="hoverImg">&lt;/span>\
+            &lt;/div>\
+            &lt;iframe src="">Your browser does not support iframes.&lt;/iframe>\
+        &lt;/div>';
+
+    /**
+     * Private variables for the module
+     */
+    var $iframeDiv;
+    var history;
+
+    /**
+     * Init the module
+     */
+    function _init() {
+        // Create the frame div and append it to the page
+        $iframeDiv = $(iframe).appendTo('body');
+
+        // Create the object to manage history
+        history = {
+            pile: [],
+            index: 0,
+            clicked: false,
+            clean: function () {
+                this.pile.length = 0;
+                this.index = 0;
+                this.clicked = false;
+            }
+        };
+
+        $("#previous").button({
+            width: 20,
+            height: 20,
+            text: false,
+            icons: {
+                primary: "ui-icon-circle-triangle-w"
+            }
+        }).click(function (event) {
+            event.preventDefault();
+            //console.log('prev : '+history.index);
+            if (history.index > 1) {
+                history.index--;
+                history.clicked = true;
+                $iframeDiv.find('iframe')[0].contentWindow.history.back();
+            }
+        });
+
+        $("#next").button({
+            width: 20,
+            height: 20,
+            text: false,
+            icons: {
+                secondary: "ui-icon-circle-triangle-e"
+            }
+        }).click(function (event) {
+            event.preventDefault();
+            //console.log('next : '+history.index);
+            if (history.index != history.pile.length) {
+                history.index++;
+                history.clicked = true;
+                $iframeDiv.find('iframe')[0].contentWindow.history.forward();
+            }
+        });
+
+        $iframeDiv.find('iframe').on('load', function () {
+            //console.log('onLoad : clicked: '+history.clicked+'index : '+history.index);
+            if (history.clicked) {
+                history.clicked = false;
+                return false;
+            }
+
+            // Update history
+            history.pile.splice(history.index);
+            history.pile.push($iframeDiv.find('iframe')[0].attributes.src.nodeValue);
+            history.index++;
+        });
+    }
+
+    return {
+        /**
+         *    Hide iframe
+         */
+        hide: function () {
+            if ($iframeDiv) {
+                $iframeDiv.animate({top: -1000}, 800);
+            }
+        },
+
+        /**
+         *    Show iframe
+         *
+         *    @param html External link url
+         */
+        show: function (html) {
+
+            if (!$iframeDiv) {
+                _init();
+            }
+
+            history.clean();
+            historyClick = false;
+            var canvasWidth = parseInt($('#GlobWebCanvas').css("width"));
+            var canvasHeight = parseInt($('#GlobWebCanvas').css("height"));
+            var optimalWidth = canvasWidth * 0.8;
+            var optimalHeight = canvasHeight * 0.8;
+            var optimalTop = canvasHeight * 0.1;
+            $iframeDiv.find('iframe').css({width: optimalWidth, height: optimalHeight}).attr('src', html);
+            $iframeDiv.animate({top: optimalTop}, 800);
+        }
+    };
+
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DynamicImageView%2520constructor%250A%2520%2520%2520Creates%2520jQuery%2520view%2520of%2520the%2520given%2520_GlobWeb.DynamicImage_.html">DynamicImageView constructor
+   Creates jQuery view of the given <GlobWeb.DynamicImage></a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#addImage">addImage</a></li><li><a href="global.html#addLayer">addLayer</a></li><li><a href="global.html#addPickableLayer">addPickableLayer</a></li><li><a href="global.html#addProgressBar">addProgressBar</a></li><li><a href="global.html#addService">addService</a></li><li><a href="global.html#addView">addView</a></li><li><a href="global.html#createHelp">createHelp</a></li><li><a href="global.html#deactivate">deactivate</a></li><li><a href="global.html#focusFeature">focusFeature</a></li><li><a href="global.html#hide">hide</a></li><li><a href="global.html#hideImage">hideImage</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#isInitialized">isInitialized</a></li><li><a href="global.html#onModeToggle">onModeToggle</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#removeImage">removeImage</a></li><li><a href="global.html#removeLayer">removeLayer</a></li><li><a href="global.html#removePickableLayer">removePickableLayer</a></li><li><a href="global.html#removeService">removeService</a></li><li><a href="global.html#removeView">removeView</a></li><li><a href="global.html#selectLayer">selectLayer</a></li><li><a href="global.html#setContext">setContext</a></li><li><a href="global.html#show">show</a></li><li><a href="global.html#showImage">showImage</a></li><li><a href="global.html#toggleMode">toggleMode</a></li><li><a href="global.html#unregisterEvents">unregisterEvents</a></li><li><a href="global.html#updateContext">updateContext</a></li><li><a href="global.html#updateUI">updateUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Aug 26 2016 10:13:35 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

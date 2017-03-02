@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: gui/SearchTool.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: gui/SearchTool.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*******************************************************************************
+ * Copyright 2012-2015 CNES - CENTRE NATIONAL d'ETUDES SPATIALES
+ *
+ * This file is part of SITools2.
+ *
+ * SITools2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SITools2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SITools2. If not, see &lt;http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+/*global define: false */
+
+/**
+ * Tool designed to select areas on globe
+ */
+
+define(["jquery", "underscore-min", "./PickingManager", "gui_core/SelectionToolCore", "./PickingManager", "./LayerServiceView", "../Utils", "gw/Tiling/HEALPixBase"],
+    function ($, _, PickingManager, SelectionToolCore, _PickingManager, LayerServiceView, Utils, HealpixBase) {
+      // ATTENTION, ATTENTION, FL 2016/08/26
+      //  PickingManager présent 2x dans les paramètres, renommage en _PickingManager du second
+
+
+
+        var layerServiceOption = _.template('&lt;div class="addLayer_&lt;%=layerName%>" style="padding:2px;" name="&lt;%=layerName%>">' +
+            '&lt;button class="layerServices ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only">' +
+            '&lt;span class="ui-button-icon-primary ui-icon ui-icon-wrench">&lt;/span>' +
+            '&lt;span class="ui-button-text">Available services&lt;/span>' +
+            '&lt;/button>' +
+            ' &lt;label title="&lt;%=layerDescription%>" >&lt;%=layer.name%>&lt;/label>&lt;/div>');
+
+        var self, navigation, globe, selectionTool, layers, availableLayers;
+
+        /**
+         *    @param options Configuration properties
+         *        &lt;ul>
+         *            &lt;li>globe: Globe&lt;/li>
+         *            &lt;li>navigation: Navigation&lt;/li>
+         *            &lt;li>onselect: On selection callback&lt;/li>
+         *            &lt;li>style: Selection tool style&lt;/li>
+         *        &lt;/ul>
+         *    @constructor
+         */
+        var SearchTool = function (options) {
+            // Required options
+            globe = options.globe;
+            navigation = options.navigation;
+            layers = options.layers;
+
+            self = this;
+
+            this.activated = false;
+            this.renderContext = globe.renderContext;
+            this.coordinateSystem = globe.coordinateSystem;
+
+            $('#searchInvoker').on('click', function () {
+                self.toggle();
+            }).hover(function () {
+                $(this).animate({left: '-10px'}, 100);
+            }, function () {
+                $(this).animate({left: '-20px'}, 100);
+            });
+
+            availableLayers = self.filterServicesAvailableOnLayers();
+        };
+
+
+        /**
+         *    Activate/desactivate the tool
+         */
+        SearchTool.prototype.toggle = function () {
+            this.activated = !this.activated;
+
+            if (this.activated)
+                this.activate();
+            else
+                this.deactivate();
+
+            $('#searchInvoker').toggleClass('selected');
+        };
+
+        /**************************************************************************************************************/
+
+        SearchTool.prototype.activate = function () {
+            $(this.renderContext.canvas).css('cursor', 'url(css/images/selectionCursor.png)');
+
+            $('#GlobWebCanvas').css('cursor', 'crosshair');
+
+            $('#categoryDiv').hide();
+            $('#navigationDiv').hide();
+            $('#2dMapContainer').hide();
+            $('#shareContainer').hide();
+            $('#sampContainer').hide();
+            $('#measureSkyContainer').hide();
+            $('#switch2DContainer').hide();
+            $('#fps').hide();
+
+
+            $('#rightTopPopup').append('&lt;p style="margin:0px;">Draw a searching area on the map&lt;/p>');
+            $('#rightTopPopup').dialog({
+                draggable: false,
+                resizable: false,
+                width: 280,
+                maxHeight: 400,
+                dialogClass: 'popupService noTitlePopup',
+                position: {
+                    my: "right top",
+                    at: "right top",
+                    of: window
+                }
+
+            });
+
+            PickingManager.deactivate();
+            navigation.stop();
+
+            selectionTool = new SelectionToolCore({
+                globe: globe,
+                navigation: navigation,
+                activated: true,
+                onselect: function (coordinates) {
+                    $('.cutOutService').slideDown();
+                    self.displayAvailableServices();
+
+                    self.coordinates = coordinates;
+
+                    // Activate picking events
+                    $(self.renderContext.canvas).css('cursor', 'default');
+                    $('#GlobWebCanvas').css('cursor', 'default');
+                    PickingManager.activate();
+                    navigation.start();
+
+                    //selectionTool.toggle();
+                }
+            });
+        };
+
+        /**************************************************************************************************************/
+
+        SearchTool.prototype.deactivate = function () {
+            $(this.renderContext.canvas).css('cursor', 'default');
+            $('#GlobWebCanvas').css('cursor', 'default');
+
+            $('#categoryDiv').show();
+            $('#navigationDiv').show();
+            $('#2dMapContainer').show();
+            $('#shareContainer').show();
+            $('#sampContainer').show();
+            $('#measureSkyContainer').show();
+            $('#switch2DContainer').show();
+            $('#fps').show();
+
+            $('#rightTopPopup').empty().dialog('close');
+
+            PickingManager.activate();
+            navigation.start();
+            selectionTool.clear();
+            selectionTool.toggle();
+
+        };
+
+        /**************************************************************************************************************/
+
+        /**
+         *    Keep only layers having available searching services
+         */
+        SearchTool.prototype.filterServicesAvailableOnLayers = function () {
+            var availablelayers = [];
+            _.each(layers, function (layer) {
+                if (!_.isEmpty(layer.availableServices)) {
+                    availablelayers.push(layer);
+                }
+            });
+            return availablelayers;
+        };
+
+        /**************************************************************************************************************/
+
+        /**
+         *    Display available services from layers in the middle top popup
+         */
+        SearchTool.prototype.displayAvailableServices = function () {
+
+            $('#rightTopPopup').empty();
+            $('#rightTopPopup').append('&lt;p>Select a service from available layers : &lt;/p>');
+
+            _.each(availableLayers, function (layer) {
+                var layerHtml = layerServiceOption({
+                    layerName : layer.name.replace(' ', ''),
+                    layerDescription : layer.description,
+                    layer : layer
+                });
+                $('#rightTopPopup').append(layerHtml);
+
+                $('.addLayer_' + layer.name.replace(' ', '')).data("layer", layer);
+
+                $('.addLayer_' + layer.name.replace(' ', ''))
+                    .on('click', ".layerServices", self.showLayerServices);
+            });
+        };
+
+        /**************************************************************************************************************/
+
+        SearchTool.prototype.showLayerServices = function () {
+            var layer = $(this.parentElement).data("layer");
+
+            var selectedTile = mizar.navigation.globe.tileManager.getVisibleTile(self.coordinates[0][0], self.coordinates[0][1]);
+
+            if (selectedTile != undefined) {
+                var order = selectedTile.order;
+            }
+
+            var healpixRanges = HealpixBase.convertPolygonToHealpixOrder(self.coordinates, 4, order);
+
+            layer.serviceParameters  = {
+                "healpix" : healpixRanges,
+                "order" : ""
+            };
+
+            LayerServiceView.show(layer);
+
+            //self.toggle();
+        }
+
+        return SearchTool;
+
+    });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DynamicImageView%2520constructor%250A%2520%2520%2520Creates%2520jQuery%2520view%2520of%2520the%2520given%2520_GlobWeb.DynamicImage_.html">DynamicImageView constructor
+   Creates jQuery view of the given <GlobWeb.DynamicImage></a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#addImage">addImage</a></li><li><a href="global.html#addLayer">addLayer</a></li><li><a href="global.html#addPickableLayer">addPickableLayer</a></li><li><a href="global.html#addProgressBar">addProgressBar</a></li><li><a href="global.html#addService">addService</a></li><li><a href="global.html#addView">addView</a></li><li><a href="global.html#createHelp">createHelp</a></li><li><a href="global.html#deactivate">deactivate</a></li><li><a href="global.html#focusFeature">focusFeature</a></li><li><a href="global.html#hide">hide</a></li><li><a href="global.html#hideImage">hideImage</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#isInitialized">isInitialized</a></li><li><a href="global.html#onModeToggle">onModeToggle</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#removeImage">removeImage</a></li><li><a href="global.html#removeLayer">removeLayer</a></li><li><a href="global.html#removePickableLayer">removePickableLayer</a></li><li><a href="global.html#removeService">removeService</a></li><li><a href="global.html#removeView">removeView</a></li><li><a href="global.html#selectLayer">selectLayer</a></li><li><a href="global.html#setContext">setContext</a></li><li><a href="global.html#show">show</a></li><li><a href="global.html#showImage">showImage</a></li><li><a href="global.html#toggleMode">toggleMode</a></li><li><a href="global.html#unregisterEvents">unregisterEvents</a></li><li><a href="global.html#updateContext">updateContext</a></li><li><a href="global.html#updateUI">updateUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Aug 26 2016 10:13:35 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

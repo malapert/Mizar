@@ -1,0 +1,105 @@
+<html>
+
+<head>
+<title>Mizar example : Extrude animation</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" data-main="../src/rconfig.js" src="../node_modules/requirejs/require.js"></script>
+<script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="../node_modules/underscore/underscore-min.js"></script>
+
+<script type="text/javascript">
+
+require(['Mizar'],
+	function (Mizar)
+{
+	var mizar = new Mizar({
+			canvas :"GlobWebCanvas",
+			planetContext : {
+				mode:"3d",
+				lighting: false,
+				tileErrorTreshold: 3,
+				continuousRendering: true
+			}
+		});
+
+		mizar.createStats( {element: 'fps', verbose: false} );
+
+		var afterVectorLoad = function() {
+				// Generate random country indices
+				var countriesToExtrude = [];
+				var nbCountries = 177;
+				for ( var i=0; i<15; i++ ) {
+					countriesToExtrude.push(Math.floor(Math.random() * nbCountries));
+				}
+
+
+				var animation = mizar.AnimationFactory.create(
+					mizar.ANIMATION.Segmented,
+					{
+						"duration":1000,
+						"valueSetter":
+								function(value) {
+									for ( var i=0; i<countriesToExtrude.length; i++ )
+									{
+										// Extract feature for the given country
+										var feature = vectorLayer.features[countriesToExtrude[i]];
+										var featureStyle = feature.properties.style;
+										if ( !featureStyle )
+										{
+											featureStyle = mizar.DrawingFactory.createFeatureStyle(vectorLayer.style);
+											vectorLayer.modifyFeatureStyle( feature, featureStyle );
+										}
+										featureStyle.setExtrusionScale(value);
+									}
+									// Uncomment to extrude all !
+									//vectorLayer.style.extrusionScale = value;
+								}
+					});
+
+				animation.addSegment(
+					0.0, extrusionScale,
+					1.0, 2,
+					function(t, a, b) {
+						return mizar.getUtilityNumeric().lerp(t, a, b);
+					}
+				);
+				mizar.planetContext.planet.addAnimation(animation);
+
+				// Start animation 2s after
+				setTimeout(function() {
+					animation.start();
+				}, 2000);
+		}
+
+		var extrusionScale = 0.21;
+		var vectorLayer = mizar.LayerFactory.create(mizar.LAYER.Vector,{
+			style : mizar.DrawingFactory.createFeatureStyle({
+				fillColor: [1.,1.,1.,1.],
+				fill: true,
+				strokeColor: [0,0,0,1],
+				extrude: mizar.planetContext.planet.coordinateSystem.geoide.realPlanetRadius/10, // Extrude max value
+				extrusionScale: extrusionScale
+			}),
+			url :"land.json",
+			callback : afterVectorLoad
+		});
+		mizar.addPlanetLayer( vectorLayer );
+
+});
+
+
+</script>
+
+</head>
+
+
+<body style="background-color: white;">
+    <canvas id="GlobWebCanvas" style="border: none;" width="1400" height="1050"></canvas>
+  	<br/>
+	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+	<a href="index.html">Back</a>
+</body>
+
+</html>

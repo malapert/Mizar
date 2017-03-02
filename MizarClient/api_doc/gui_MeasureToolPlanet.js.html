@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: gui/MeasureToolPlanet.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: gui/MeasureToolPlanet.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*******************************************************************************
+ * Copyright 2012-2015 CNES - CENTRE NATIONAL d'ETUDES SPATIALES
+ *
+ * This file is part of SITools2.
+ *
+ * SITools2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SITools2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SITools2. If not, see &lt;http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+/*global define: false */
+
+/**
+ * Tool designed to measure the distance between two points in planet mode
+ */
+
+define(["jquery", "underscore-min", "gui_core/MeasureToolPlanetCore", "Utils", "jquery.ui"],
+    function ($, _, MeasureToolPlanetCore, Utils) {
+
+        var globe, navigation, onselect, scale, self;
+
+        /**
+         *    @constructor
+         *    @param options Configuration options
+         *        &lt;ul>
+         *            &lt;li>globe: Globe&lt;/li>
+         *            &lt;li>navigation: Navigation&lt;/li>
+         *            &lt;li>onselect: On select callback&lt;/li>
+         *        &lt;/ul>
+         */
+        var MeasureToolPlanet = function (options) {
+            // Required options
+            globe = options.globe;
+            navigation = options.navigation;
+            onselect = options.onselect;
+
+            MeasureToolPlanetCore.init(options);
+
+            this.renderContext = globe.renderContext;
+
+            // Measure attributes
+            //this.distance;
+            //this.pickPoint; // Window pick point
+            //this.secondPickPoint; // Window second pick point
+            //this.geoDistance;
+            //this.geoPickPoint; // Pick point in geographic reference
+            //this.secondGeoPickPoint; // Pick point in geographic reference
+
+            self = this;
+
+            var _handleMouseUp = function (event) {
+
+                if (!MeasureToolPlanetCore.activated) {
+                    return;
+                }
+                MeasureToolPlanetCore._handleMouseUp(event);
+                $.proxy(self.displayButtonElevation(event), self);
+
+            };
+
+            $('#elevationTrackingBtn').button()
+                .click($.proxy(self.displayPopupElevation, this));
+
+            self.renderContext.canvas.addEventListener("contextmenu", function () {
+                return false;
+            });
+            self.renderContext.canvas.addEventListener("mousedown", $.proxy(MeasureToolPlanetCore._handleMouseDown, this));
+            self.renderContext.canvas.addEventListener("mouseup", $.proxy(_handleMouseUp, this));
+            self.renderContext.canvas.addEventListener("mousemove", $.proxy(MeasureToolPlanetCore._handleMouseMove, this));
+
+            if (options.isMobile) {
+                self.renderContext.canvas.addEventListener("touchend", $.proxy(_handleMouseUp, this));
+                self.renderContext.canvas.addEventListener("touchmove", $.proxy(MeasureToolPlanetCore._handleMouseMove, this));
+                self.renderContext.canvas.addEventListener("touchstart", $.proxy(MeasureToolPlanetCore._handleMouseDown, this));
+            }
+
+            $('#measurePlanetInvoker').on('click', function () {
+                self.toggle();
+            }).hover(function () {
+                $(this).animate({left: '-10px'}, 100);
+            }, function () {
+                $(this).animate({left: '-20px'}, 100);
+            });
+        };
+
+
+        /**
+         *    Enable/disable the tool
+         */
+        MeasureToolPlanet.prototype.toggle = function () {
+            MeasureToolPlanetCore.activated = !MeasureToolPlanetCore.activated;
+            if (MeasureToolPlanetCore.activated) {
+                $(self.renderContext.canvas).css('cursor', 'url(css/images/selectionCursor.png)');
+            }
+            else {
+                $(self.renderContext.canvas).css('cursor', 'default');
+                $('#elevationTrackingBtn').hide();
+                try {
+                    $('#popupElevation').dialog('close');
+                } catch (e) {
+                }
+
+                MeasureToolPlanetCore.clear();
+            }
+            $('#measurePlanetInvoker').toggleClass('selected');
+        };
+
+        /**************************************************************************************************************/
+
+        /**
+         * Display a popup proposing to display elevation tracking
+         */
+        MeasureToolPlanet.prototype.displayButtonElevation = function (event) {
+
+            $('#elevationTrackingBtn').button()
+                .show()
+                .position({
+                    my: "left+3 bottom-3",
+                    of: event,
+                    collision: "fit"
+                });
+
+        };
+
+        /**************************************************************************************************************/
+
+        /**
+         * Display a popup proposing to display elevation tracking
+         */
+        MeasureToolPlanet.prototype.displayPopupElevation = function (event) {
+
+            var options = {};
+            var intermediatePoints = MeasureToolPlanetCore.calculateIntermediateElevationPoint(options, MeasureToolPlanetCore.geoPickPoint, MeasureToolPlanetCore.secondGeoPickPoint);
+
+            MeasureToolPlanetCore.storeDistanceAndElevation(intermediatePoints[0], intermediatePoints[0]);
+            for (var i = 0; i &lt; intermediatePoints.length; i++) {
+                MeasureToolPlanetCore.storeDistanceAndElevation(intermediatePoints[0], intermediatePoints[i]);
+            }
+
+            $("#popupElevation").dialog({
+                width: 500,
+                height: 400,
+                position: {
+                    my: "right top",
+                    at: "right top",
+                    of: window
+                }
+            });
+
+            $.plot("#popupElevation", [{
+                data: MeasureToolPlanetCore.elevations, label: "elevation (m)"
+            }], {
+                series: {
+                    color: "#F68D12",
+                    lines: {
+                        show: true
+                    },
+                    points: {
+                        show: true
+                    }
+                },
+                grid: {
+                    hoverable: true
+                },
+                tooltip: {
+                    show: true,
+                    content: "Distance: %x | Elevation: %y",
+                    cssClass: "flotTip",
+                    shifts: {
+                        x: -25,
+                        y: -60
+                    }
+                },
+                xaxis: {
+                    axisLabel: 'Distance (km)',
+                    axisLabelUseCanvas: false,
+                    axisLabelFontSizePixels: 20
+                },
+                yaxis: {
+                    axisLabel: 'Elevation (m)',
+                    axisLabelUseCanvas: false,
+                    axisLabelFontSizePixels: 20
+                },
+                zoom: {
+                    interactive: true
+                },
+                pan: {
+                    interactive: true
+                }
+            });
+        };
+
+        return MeasureToolPlanet;
+
+    });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DynamicImageView%2520constructor%250A%2520%2520%2520Creates%2520jQuery%2520view%2520of%2520the%2520given%2520_GlobWeb.DynamicImage_.html">DynamicImageView constructor
+   Creates jQuery view of the given <GlobWeb.DynamicImage></a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#addImage">addImage</a></li><li><a href="global.html#addLayer">addLayer</a></li><li><a href="global.html#addPickableLayer">addPickableLayer</a></li><li><a href="global.html#addProgressBar">addProgressBar</a></li><li><a href="global.html#addService">addService</a></li><li><a href="global.html#addView">addView</a></li><li><a href="global.html#createHelp">createHelp</a></li><li><a href="global.html#deactivate">deactivate</a></li><li><a href="global.html#focusFeature">focusFeature</a></li><li><a href="global.html#hide">hide</a></li><li><a href="global.html#hideImage">hideImage</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#isInitialized">isInitialized</a></li><li><a href="global.html#onModeToggle">onModeToggle</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#removeImage">removeImage</a></li><li><a href="global.html#removeLayer">removeLayer</a></li><li><a href="global.html#removePickableLayer">removePickableLayer</a></li><li><a href="global.html#removeService">removeService</a></li><li><a href="global.html#removeView">removeView</a></li><li><a href="global.html#selectLayer">selectLayer</a></li><li><a href="global.html#setContext">setContext</a></li><li><a href="global.html#show">show</a></li><li><a href="global.html#showImage">showImage</a></li><li><a href="global.html#toggleMode">toggleMode</a></li><li><a href="global.html#unregisterEvents">unregisterEvents</a></li><li><a href="global.html#updateContext">updateContext</a></li><li><a href="global.html#updateUI">updateUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Aug 26 2016 10:13:35 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

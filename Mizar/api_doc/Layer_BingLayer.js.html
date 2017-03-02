@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Layer/BingLayer.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Layer/BingLayer.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>define(['../Utils/Utils', '../Layer/RasterLayer', '../Tiling/MercatorTiling'], function (Utils, RasterLayer, MercatorTiling) {
+
+    /**************************************************************************************************************/
+    var BingTileSystem = (function () {
+        var EarthRadius = 6378137;
+        var MinLatitude = -85.05112878;
+        var MaxLatitude = 85.05112878;
+        var MinLongitude = -180;
+        var MaxLongitude = 180;
+
+        // &lt;summary>
+        // Clips a number to the specified minimum and maximum values.
+        // &lt;/summary>
+        // &lt;param name="n">The number to clip.&lt;/param>
+        // &lt;param name="minValue">Minimum allowable value.&lt;/param>
+        // &lt;param name="maxValue">Maximum allowable value.&lt;/param>
+        // &lt;returns>The clipped value.&lt;/returns>
+        function Clip(n, minValue, maxValue) {
+            return Math.min(Math.max(n, minValue), maxValue);
+        }
+
+        // &lt;summary>
+        // Determines the map width and height (in pixels) at a specified level
+        // of detail.
+        // &lt;/summary>
+        // &lt;param name="levelOfDetail">Level of detail, from 1 (lowest detail)
+        // to 23 (highest detail).&lt;/param>
+        // &lt;returns>The map width and height in pixels.&lt;/returns>
+        function MapSize(levelOfDetail) {
+            return 256 &lt;&lt; levelOfDetail;
+        }
+
+        // &lt;summary>
+        // Determines the ground resolution (in meters per pixel) at a specified
+        // latitude and level of detail.
+        // &lt;/summary>
+        // &lt;param name="latitude">Latitude (in degrees) at which to measure the
+        // ground resolution.&lt;/param>
+        // &lt;param name="levelOfDetail">Level of detail, from 1 (lowest detail)
+        // to 23 (highest detail).&lt;/param>
+        // &lt;returns>The ground resolution, in meters per pixel.&lt;/returns>
+        function GroundResolution(latitude, levelOfDetail) {
+            latitude = Clip(latitude, MinLatitude, MaxLatitude);
+            return Math.cos(latitude * Math.PI / 180.0) * 2.0 * Math.PI * EarthRadius / MapSize(levelOfDetail);
+        }
+
+        // &lt;summary>
+        // Determines the map scale at a specified latitude, level of detail,
+        // and screen resolution.
+        // &lt;/summary>
+        // &lt;param name="latitude">Latitude (in degrees) at which to measure the
+        // map scale.&lt;/param>
+        // &lt;param name="levelOfDetail">Level of detail, from 1 (lowest detail)
+        // to 23 (highest detail).&lt;/param>
+        // &lt;param name="screenDpi">Resolution of the screen, in dots per inch.&lt;/param>
+        // &lt;returns>The map scale, expressed as the denominator N of the ratio 1 : N.&lt;/returns>
+        function MapScale(latitude, levelOfDetail, screenDpi) {
+            return GroundResolution(latitude, levelOfDetail) * screenDpi / 0.0254;
+        }
+
+        // &lt;summary>
+        // Converts a point from latitude/longitude WGS-84 coordinates (in degrees)
+        // into pixel XY coordinates at a specified level of detail.
+        // &lt;/summary>
+        // &lt;param name="latitude">Latitude of the point, in degrees.&lt;/param>
+        // &lt;param name="longitude">Longitude of the point, in degrees.&lt;/param>
+        // &lt;param name="levelOfDetail">Level of detail, from 1 (lowest detail)
+        // to 23 (highest detail).&lt;/param>
+        // &lt;param name="pixelX">Output parameter receiving the X coordinate in pixels.&lt;/param>
+        // &lt;param name="pixelY">Output parameter receiving the Y coordinate in pixels.&lt;/param>
+        function LatLongToPixelXY(latitude, longitude, levelOfDetail) {
+            latitude = Clip(latitude, MinLatitude, MaxLatitude);
+            longitude = Clip(longitude, MinLongitude, MaxLongitude);
+
+            var x = (longitude + 180) / 360;
+            var sinLatitude = Math.sin(latitude * Math.PI / 180);
+            var y = 0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI);
+
+            var mapSize = MapSize(levelOfDetail);
+            var pixelX = Clip(x * mapSize + 0.5, 0, mapSize - 1);
+            var pixelY = Clip(y * mapSize + 0.5, 0, mapSize - 1);
+
+            return [Math.floor(pixelX), Math.floor(pixelY)];
+        }
+
+        // &lt;summary>
+        // Converts a pixel from pixel XY coordinates at a specified level of detail
+        // into latitude/longitude WGS-84 coordinates (in degrees).
+        // &lt;/summary>
+        // &lt;param name="pixelX">X coordinate of the point, in pixels.&lt;/param>
+        // &lt;param name="pixelY">Y coordinates of the point, in pixels.&lt;/param>
+        // &lt;param name="levelOfDetail">Level of detail, from 1 (lowest detail)
+        // to 23 (highest detail).&lt;/param>
+        // &lt;param name="latitude">Output parameter receiving the latitude in degrees.&lt;/param>
+        // &lt;param name="longitude">Output parameter receiving the longitude in degrees.&lt;/param>
+        function PixelXYToLatLong(pixelX, pixelY, levelOfDetail) {
+            var mapSize = MapSize(levelOfDetail);
+            var x = (Clip(pixelX, 0, mapSize - 1) / mapSize) - 0.5;
+            var y = 0.5 - (Clip(pixelY, 0, mapSize - 1) / mapSize);
+
+            var latitude = 90 - 360 * Math.atan(Math.exp(-y * 2 * Math.PI)) / Math.PI;
+            var longitude = 360 * x;
+
+            return [latitude, longitude];
+        }
+
+        // &lt;summary>
+        // Converts pixel XY coordinates into tile XY coordinates of the tile containing
+        // the specified pixel.
+        // &lt;/summary>
+        // &lt;param name="pixelX">Pixel X coordinate.&lt;/param>
+        // &lt;param name="pixelY">Pixel Y coordinate.&lt;/param>
+        // &lt;param name="tileX">Output parameter receiving the tile X coordinate.&lt;/param>
+        // &lt;param name="tileY">Output parameter receiving the tile Y coordinate.&lt;/param>
+        function PixelXYToTileXY(pixelXY) {
+            return [pixelXY[0] / 256, pixelXY[1] / 256];
+        }
+
+        // &lt;summary>
+        // Converts tile XY coordinates into pixel XY coordinates of the upper-left pixel
+        // of the specified tile.
+        // &lt;/summary>
+        // &lt;param name="tileX">Tile X coordinate.&lt;/param>
+        // &lt;param name="tileY">Tile Y coordinate.&lt;/param>
+        // &lt;param name="pixelX">Output parameter receiving the pixel X coordinate.&lt;/param>
+        // &lt;param name="pixelY">Output parameter receiving the pixel Y coordinate.&lt;/param>
+        function TileXYToPixelXY(tileXY) {
+            return [tileXY[0] * 256, tileXY[1] * 256];
+        }
+
+        // &lt;summary>
+        // Converts tile XY coordinates into a QuadKey at a specified level of detail.
+        // &lt;/summary>
+        // &lt;param name="tileX">Tile X coordinate.&lt;/param>
+        // &lt;param name="tileY">Tile Y coordinate.&lt;/param>
+        // &lt;param name="levelOfDetail">Level of detail, from 1 (lowest detail)
+        // to 23 (highest detail).&lt;/param>
+        // &lt;returns>A string containing the QuadKey.&lt;/returns>
+        function TileXYToQuadKey(tileX, tileY, levelOfDetail) {
+            var quadKey = "";
+            for (var i = levelOfDetail; i > 0; i--) {
+                var digit = '0';
+                var mask = 1 &lt;&lt; (i - 1);
+                if ((tileX &amp; mask) !== 0) {
+                    digit++;
+                }
+                if ((tileY &amp; mask) !== 0) {
+                    digit++;
+                    digit++;
+                }
+                quadKey += digit;
+            }
+            return quadKey;
+        }
+
+        // &lt;summary>
+        // Converts a QuadKey into tile XY coordinates.
+        // &lt;/summary>
+        // &lt;param name="quadKey">QuadKey of the tile.&lt;/param>
+        // &lt;param name="tileX">Output parameter receiving the tile X coordinate.&lt;/param>
+        // &lt;param name="tileY">Output parameter receiving the tile Y coordinate.&lt;/param>
+        // &lt;param name="levelOfDetail">Output parameter receiving the level of detail.&lt;/param>
+        function QuadKeyToTileXY(quadKey) {
+            var tileX = 0, tileY = 0;
+            var levelOfDetail = quadKey.length();
+            for (var i = levelOfDetail; i > 0; i--) {
+                var mask = 1 &lt;&lt; (i - 1);
+                switch (quadKey[levelOfDetail - i]) {
+                    case '0':
+                        break;
+
+                    case '1':
+                        tileX |= mask;
+                        break;
+
+                    case '2':
+                        tileY |= mask;
+                        break;
+
+                    case '3':
+                        tileX |= mask;
+                        tileY |= mask;
+                        break;
+
+                    default:
+                        throw new ArgumentException("Invalid QuadKey digit sequence.");
+                }
+            }
+        }
+
+        return {
+            tileXYToQuadKey: TileXYToQuadKey,
+            latLongToPixelXY: LatLongToPixelXY
+        };
+    })();
+
+    /**************************************************************************************************************/
+
+    /**
+     @name BingLayer
+     @class
+         A layer to display Bing imagery data.
+     @augments RasterLayer
+     @param options Configuration properties. See {@link RasterLayer} for base properties :
+     &lt;ul>
+     &lt;li>imageSet : the image set to use, can be Aerial, Road&lt;/li>
+     &lt;li>key : the bing key to use&lt;/li>
+     &lt;/ul>
+     */
+    var BingLayer = function (options) {
+        // Call ancestor
+        RasterLayer.prototype.constructor.call(this, options);
+
+        this.tilePixelSize = 256;
+        this.tiling = new MercatorTiling(options.baseLevel || 2);
+        this.numberOfLevels = 18;
+        this.baseUrl = "";
+        this.baseUrlSubDomains = [];
+        this._ready = false;
+
+        var self = this;
+
+        // Need to provide a global callback for JSONP
+        window._bingTileProviderCallback = function (result) {
+
+            self.baseUrl = result.resourceSets[0].resources[0].imageUrl;
+            self.baseUrlSubDomains = result.resourceSets[0].resources[0].imageUrlSubdomains;
+            self._ready = true;
+
+            // Call callback if set
+            if (options.onready &amp;&amp; options.onready instanceof Function) {
+                options.onready(self);
+            }
+
+            // Request a frame
+            if (self.globe) {
+                self.globe.renderContext.requestFrame();
+            }
+        };
+
+        // JSONP Call : needed because of cross-site origin policy
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = "http://dev.virtualearth.net/REST/V1/Imagery/Metadata/" + options.imageSet + "?jsonp=_bingTileProviderCallback&amp;key=" + options.key;
+        script.id = "_bingTileProviderCallback";
+        document.getElementsByTagName("head")[0].appendChild(script);
+    };
+
+    Utils.inherits(RasterLayer, BingLayer);
+
+    /**************************************************************************************************************/
+
+    /**
+     Get an url for the given tile
+     */
+    BingLayer.prototype.getUrl = function (tile) {
+        var url = this.baseUrl.replace("{quadkey}", BingTileSystem.tileXYToQuadKey(tile.x, tile.y, tile.level));
+        return url.replace("{subdomain}", this.baseUrlSubDomains[Math.floor(Math.random() * this.baseUrlSubDomains.length)]);
+    };
+
+    /**************************************************************************************************************/
+
+    return BingLayer;
+
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AitoffCoordinateSystem.html">AitoffCoordinateSystem</a></li><li><a href="AtmosphereLayer.html">AtmosphereLayer</a></li><li><a href="AugustCoordinateSystem.html">AugustCoordinateSystem</a></li><li><a href="BaseLayer.html">BaseLayer</a></li><li><a href="BingLayer.html">BingLayer</a></li><li><a href="CoordinateGridLayer.html">CoordinateGridLayer</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="CoordinateSystemFactory.html">CoordinateSystemFactory</a></li><li><a href="EclipticCoordinateSystem.html">EclipticCoordinateSystem</a></li><li><a href="EquatorialCoordinateSystem.html">EquatorialCoordinateSystem</a></li><li><a href="GalacticCoordinateSystem.html">GalacticCoordinateSystem</a></li><li><a href="Globe.html">Globe</a></li><li><a href="GroundOverlayLayer.html">GroundOverlayLayer</a></li><li><a href="HEALPixFITSLayer.html">HEALPixFITSLayer</a></li><li><a href="HEALPixLayer.html">HEALPixLayer</a></li><li><a href="ICRSCoordinateSystem.html">ICRSCoordinateSystem</a></li><li><a href="LayerFactory.html">LayerFactory</a></li><li><a href="MercatorCoordinateSystem.html">MercatorCoordinateSystem</a></li><li><a href="Mizar.html">Mizar</a></li><li><a href="MocLayer.html">MocLayer</a></li><li><a href="MollweideCoordinateSystem.html">MollweideCoordinateSystem</a></li><li><a href="OpenSearchLayer.html">OpenSearchLayer</a></li><li><a href="OSMLayer.html">OSMLayer</a></li><li><a href="PlanetLayer.html">PlanetLayer</a></li><li><a href="PlateCoordinateSystem.html">PlateCoordinateSystem</a></li><li><a href="ProjectionFactory.html">ProjectionFactory</a></li><li><a href="RasterLayer.html">RasterLayer</a></li><li><a href="Sky.html">Sky</a></li><li><a href="SuperGalacticCoordinateSystem.html">SuperGalacticCoordinateSystem</a></li><li><a href="TileWireframeLayer.html">TileWireframeLayer</a></li><li><a href="VectorLayer.html">VectorLayer</a></li><li><a href="WCSElevationLayer.html">WCSElevationLayer</a></li><li><a href="WGS84CoordinateSystem.html">WGS84CoordinateSystem</a></li><li><a href="WMSElevationLayer.html">WMSElevationLayer</a></li><li><a href="WMSLayer.html">WMSLayer</a></li><li><a href="WMTSLayer.html">WMTSLayer</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Oct 05 2016 14:36:19 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

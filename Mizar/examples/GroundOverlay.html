@@ -1,0 +1,53 @@
+<html>
+
+<head>
+<title>Mizar example : Ground overlay</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" data-main="../src/rconfig.js" src="../node_modules/requirejs/require.js"></script>
+<script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="../node_modules/underscore/underscore-min.js"></script>
+
+<script type="text/javascript">
+
+require(['Mizar'],
+function (Mizar)
+{
+	// Create Mizar
+	var mizar = new Mizar({
+			canvas :"MizarCanvas",
+			planetContext : {
+				mode:"3d",
+				atmosphere: false,
+				lighting: false,
+				tileErrorTreshold: 3,
+				continuousRendering: true}
+		});
+
+	mizar.createStats( {element: 'fps', verbose: false} );
+
+	var blueMarbleLayer = mizar.LayerFactory.create(mizar.LAYER.WMS,{ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
+	mizar.setPlanetBaseImagery( blueMarbleLayer );
+
+	var elevationLayer = mizar.LayerFactory.create(mizar.LAYER.WCSElevation,{ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+	mizar.setBaseElevation( elevationLayer );
+
+	var go1 = mizar.LayerFactory.create(mizar.LAYER.GroundOverlay, { image:"mizar.jpg", quad: [ [-1,45], [-2,46], [0,48], [1,47]  ], opacity: 0.5, flipY: false });
+	mizar.addPlanetLayer( go1 );
+
+	var go2 = mizar.LayerFactory.create(mizar.LAYER.GroundOverlay, { image:"mizar.jpg", quad: [ [10,40], [18,40], [15,48], [10,45] ] });
+	mizar.addPlanetLayer( go2 );
+});
+
+</script>
+
+</head>
+
+
+<body style="margin: 0; padding: 0;">
+    <canvas id="MizarCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas>
+ 	<div id="fps"></div>
+</body>
+	<a href="index.html">Back</a>
+</html>

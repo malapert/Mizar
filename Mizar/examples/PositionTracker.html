@@ -1,0 +1,56 @@
+<html>
+
+<head>
+<title>Mizar example : simple globe with local geojson layer</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="css/Mizar.css">
+
+<script type="text/javascript" data-main="../src/rconfig.js" src="../node_modules/requirejs/require.js"></script>
+<script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="../node_modules/underscore/underscore-min.js"></script>
+
+
+<script type="text/javascript">
+require(['../src/Mizar'],
+	function (Mizar)
+  {
+      // Create Mizar
+			var mizar = new Mizar({
+				canvas :"MizarCanvas",
+				planetContext : {
+								lighting: false,
+								tileErrorTreshold: 3,
+								continuousRendering: true,
+								positionTracker : {
+									 position: "bottom"
+								}
+				}
+				});
+
+
+      var bmLayer = mizar.LayerFactory.create(
+					mizar.LAYER.WMS,
+					{ baseUrl : "http://demonstrator.telespazio.com/wmspub",
+					  layers  : "BlueMarble,esat"
+					});
+			mizar.setPlanetBaseImagery( bmLayer );
+
+			var elevationLayer = mizar.LayerFactory.create(
+				mizar.LAYER.WCSElevation,
+				{ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+			mizar.setBaseElevation( elevationLayer );
+
+});
+</script>
+
+</head>
+
+
+<body>
+    <canvas id="MizarCanvas" style="border: none;" width="800" height="800"></canvas>
+  	<br/>
+		<div id="posTracker"/>
+		<a href="index.html">Back</a>
+</body>
+
+</html>

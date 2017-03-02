@@ -1,0 +1,101 @@
+<html>
+
+<head>
+<title>Mizar example : feature</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" data-main="../src/rconfig.js" src="../node_modules/requirejs/require.js"></script>
+<script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="../node_modules/underscore/underscore-min.js"></script>
+
+<script type="text/javascript">
+
+require(['Mizar'], function (Mizar)
+{
+	mizar = new Mizar();
+
+	var globe = mizar.getContextFactory().createGlobe({
+			canvas: "GlobWebCanvas",
+			atmosphere: false,
+			lighting: false,
+			showWireframe: false,
+			tileErrorTreshold: 4,
+			continuousRendering: false,
+			statsElement: "fps" });
+
+	var navigation = mizar.getNavigationFactory().createGlobe(globe.getGlobe());
+
+	var vectorLayer = mizar.getLayerFactory().create(mizar.LAYER.Vector);
+	globe.addLayer( vectorLayer );
+
+
+
+	var feature = { type: "Feature",
+					geometry: { type: "Polygon",
+							coordinates: [ [ [79.34, 70.2],
+											[360-278.72, 70.06],
+											[79.47, 67.02],
+											[77.79, 63.52],
+											[76.52, 60.4],
+											[75.18, 60.52],
+											[76.3, 63.64],
+											[77.78, 67.15],
+											[79.34, 70.2] ] ]
+							}
+				};
+	vectorLayer.addFeature( feature );
+
+	$.ajax({
+		  url: "error.geojson",
+		  dataType: "json",
+		  success: function(data)
+		  {
+			vectorLayer.addFeatureCollection( data );
+		  }
+	});
+
+	$.ajax({
+		  url: "europe.json",
+		  success: function(data)
+		  {
+			vectorLayer.addFeatureCollection( data );
+		  }
+	});
+
+	$.ajax({
+		  url: "multiPolygon.json",
+		  success: function(data)
+		  {
+			vectorLayer.addFeatureCollection( data );
+		  }
+	});
+
+	$('#GlobWebCanvas').keypress( function(event) {
+		var key = String.fromCharCode(event.which);
+		if ( key == 'v' )
+		{
+			vectorLayer.setVisible( !vectorLayer.getVisible() );
+		}
+		else if ( key == 'a' )
+		{
+			vectorLayer.setOpacity( vectorLayer.getOpacity() - 0.1 );
+		}
+		else if ( key == 'z' )
+		{
+			vectorLayer.setOpacity( vectorLayer.getOpacity() + 0.1 );
+		}
+	});
+ });
+</script>
+
+</head>
+
+
+<body>
+  <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas>
+	<a href="index.html">Back</a>
+</body>
+
+</html>

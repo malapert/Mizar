@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Layer/BaseLayer.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Layer/BaseLayer.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>define(["../Utils/Event", "../Utils/Utils"], function (Event, Utils) {
+    /**
+     @name BaseLayer
+     @class
+         Base class for layer.
+     @param options Configuration properties for a BaseLayer:
+     &lt;ul>
+     &lt;li>name : the layer name&lt;/li>
+     &lt;li>description :  its description&lt;/li>
+     &lt;li>attribution : its attribution&lt;/li>
+     &lt;li>icon : an icon to represent the layer&lt;/li>
+     &lt;li>visible : a boolean flag to set the layer visible, default is true &lt;/li>
+     &lt;li>opacity : an opacity value, default is 1.0&lt;/li>
+     &lt;/ul>
+     */
+    var BaseLayer = function (options) {
+        Event.prototype.constructor.call(this, options);
+
+        this.globe = null;
+        this.name = options &amp;&amp; options.hasOwnProperty('name') ? options.name : "";
+        this.attribution = options &amp;&amp; options.hasOwnProperty('attribution') ? options.attribution : "";
+        this.copyrightUrl = options &amp;&amp; options.hasOwnProperty('copyrightUrl') ? options.copyrightUrl : "";
+        this.ack = options &amp;&amp; options.hasOwnProperty('ack') ? options.ack : "";
+        this.icon = options &amp;&amp; options.hasOwnProperty('icon') ? options.icon : "";
+        this.description = options &amp;&amp; options.hasOwnProperty('description') ? options.description : "";
+        this._visible = options &amp;&amp; options.hasOwnProperty('visible') ? options.visible : true;
+        this._opacity = options &amp;&amp; options.hasOwnProperty('opacity') ? options.opacity : 1.0;
+        this.properties = options &amp;&amp; options.hasOwnProperty('properties') ? options.properties : {};
+    };
+
+    /**************************************************************************************************************/
+
+    Utils.inherits(Event, BaseLayer);
+
+    /**************************************************************************************************************/
+
+    /**
+     Attach the raster layer to the globe
+     */
+    BaseLayer.prototype._attach = function (g) {
+        this.globe = g;
+        if (this.attribution &amp;&amp; this.globe.attributionHandler &amp;&amp; this._visible) {
+            this.globe.attributionHandler.addAttribution(this);
+        }
+    };
+
+    /**************************************************************************************************************/
+
+    /**
+     Detach the vector layer from the globe
+     */
+    BaseLayer.prototype._detach = function () {
+        if (this.attribution &amp;&amp; this.globe.attributionHandler) {
+            this.globe.attributionHandler.removeAttribution(this);
+        }
+
+        this.globe = null;
+    };
+
+    /**************************************************************************************************************/
+
+    /**
+     Get/Set the layer visible
+     */
+    BaseLayer.prototype.visible = function (arg) {
+        if (typeof arg == "boolean") {
+            if (this._visible != arg &amp;&amp; this.attribution &amp;&amp; this.globe.attributionHandler) {
+                this.globe.attributionHandler.toggleAttribution(this);
+            }
+
+            this._visible = arg;
+            if (this.globe) this.globe.renderContext.requestFrame();
+            this.publish("visibility:changed", this);
+        }
+        return this._visible;
+    };
+
+    /**************************************************************************************************************/
+
+    /**
+     Get/Set the opacity of the layer
+     */
+    BaseLayer.prototype.opacity = function (arg) {
+        if (typeof arg == "number") {
+            this._opacity = arg;
+            if (this.globe) this.globe.renderContext.requestFrame();
+            this.publish("opacity:changed");
+        }
+        return this._opacity;
+    };
+
+    return BaseLayer;
+
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AitoffCoordinateSystem.html">AitoffCoordinateSystem</a></li><li><a href="AtmosphereLayer.html">AtmosphereLayer</a></li><li><a href="AugustCoordinateSystem.html">AugustCoordinateSystem</a></li><li><a href="BaseLayer.html">BaseLayer</a></li><li><a href="BingLayer.html">BingLayer</a></li><li><a href="CoordinateGridLayer.html">CoordinateGridLayer</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="CoordinateSystemFactory.html">CoordinateSystemFactory</a></li><li><a href="EclipticCoordinateSystem.html">EclipticCoordinateSystem</a></li><li><a href="EquatorialCoordinateSystem.html">EquatorialCoordinateSystem</a></li><li><a href="GalacticCoordinateSystem.html">GalacticCoordinateSystem</a></li><li><a href="Globe.html">Globe</a></li><li><a href="GroundOverlayLayer.html">GroundOverlayLayer</a></li><li><a href="HEALPixFITSLayer.html">HEALPixFITSLayer</a></li><li><a href="HEALPixLayer.html">HEALPixLayer</a></li><li><a href="ICRSCoordinateSystem.html">ICRSCoordinateSystem</a></li><li><a href="LayerFactory.html">LayerFactory</a></li><li><a href="MercatorCoordinateSystem.html">MercatorCoordinateSystem</a></li><li><a href="Mizar.html">Mizar</a></li><li><a href="MocLayer.html">MocLayer</a></li><li><a href="MollweideCoordinateSystem.html">MollweideCoordinateSystem</a></li><li><a href="OpenSearchLayer.html">OpenSearchLayer</a></li><li><a href="OSMLayer.html">OSMLayer</a></li><li><a href="PlanetLayer.html">PlanetLayer</a></li><li><a href="PlateCoordinateSystem.html">PlateCoordinateSystem</a></li><li><a href="ProjectionFactory.html">ProjectionFactory</a></li><li><a href="RasterLayer.html">RasterLayer</a></li><li><a href="Sky.html">Sky</a></li><li><a href="SuperGalacticCoordinateSystem.html">SuperGalacticCoordinateSystem</a></li><li><a href="TileWireframeLayer.html">TileWireframeLayer</a></li><li><a href="VectorLayer.html">VectorLayer</a></li><li><a href="WCSElevationLayer.html">WCSElevationLayer</a></li><li><a href="WGS84CoordinateSystem.html">WGS84CoordinateSystem</a></li><li><a href="WMSElevationLayer.html">WMSElevationLayer</a></li><li><a href="WMSLayer.html">WMSLayer</a></li><li><a href="WMTSLayer.html">WMTSLayer</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Oct 05 2016 14:36:19 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

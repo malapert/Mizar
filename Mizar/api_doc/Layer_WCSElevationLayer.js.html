@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Layer/WCSElevationLayer.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Layer/WCSElevationLayer.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>define(['../Utils/Utils', './RasterLayer', '../Tiling/GeoTiling'],
+    function (Utils, RasterLayer, GeoTiling) {
+
+        /**
+         @name WCSElevationLayer
+         @class
+             Create a layer for elevation data using WCS protocol.
+             The only supported format is right now image/x-aaigrid. It is an ASCII format that is easily parsed in Javascript.
+         @augments RasterLayer
+         @param options Configuration properties for the WCSElevationLayer. See {@link RasterLayer} for base properties :
+         &lt;ul>
+         &lt;li>baseUrl : the base Url to access the WCS server&lt;/li>
+         &lt;li>coverage : the name of the coverage to use (WCS parameter)&lt;/li>
+         &lt;li>crs : the coordinate reference system to use (WCS parameter)&lt;/li>
+         &lt;li>version : 2.0.x or 1.0.x is supported&lt;/li>
+         &lt;li>scale : elevation scale value&lt;/li>
+         &lt;/ul>
+         */
+        var WCSElevationLayer = function (options) {
+            RasterLayer.prototype.constructor.call(this, options);
+
+            this.baseUrl = options.baseUrl;
+            this.tilePixelSize = options.tilePixelSize || 33;
+            this.tiling = new GeoTiling(4, 2);
+            this.numberOfLevels = options.numberOfLevels || 21;
+            this.version = options.version || '2.0.0';
+            this.format = options.format || 'image/x-aaigrid';
+            this.minElevation = options.minElevation || 0;
+            this.scale = options.scale || 1;
+
+            // Build the base GetMap URL
+            var url = this.baseUrl;
+            if (url.indexOf('?', 0) == -1) {
+                url += '?service=wcs';
+            }
+            else {
+                url += '&amp;service=wcs';
+            }
+            url += "&amp;version=" + this.version;
+            url += "&amp;request=GetCoverage";
+
+            switch (this.version.substring(0, 3)) {
+                case '2.0':
+                    this.crs = options.outputCRS || options.crs || 'http://www.opengis.net/def/crs/EPSG/0/4326';
+                    url += '&amp;outputCRS=' + this.crs;
+                    url += "&amp;size=x(" + this.tilePixelSize + ")";
+                    url += "&amp;size=y(" + this.tilePixelSize + ")";
+                    url += "&amp;coverageid=" + options.coverage;
+                    break;
+                case '1.0':
+                    url += "&amp;width=" + this.tilePixelSize;
+                    url += "&amp;height=" + this.tilePixelSize;
+                    url += '&amp;crs=' + (options.crs || 'EPSG:4326');
+                    url += "&amp;coverage=" + options.coverage;
+                    break;
+            }
+            url += '&amp;format=' + this.format;
+
+            this.getCoverageBaseUrl = url;
+        };
+
+        Utils.inherits(RasterLayer, WCSElevationLayer);
+
+
+        /**************************************************************************************************************/
+
+        /**
+         Parse a elevation response
+         */
+        WCSElevationLayer.prototype.parseElevations = function (text) {
+            if (text === null) {
+                return this._returnZeroElevations();
+            }
+            switch (this.format) {
+                case "image/x-aaigrid":
+                    return this._parseAAIGrid(text);
+                default:
+                    console.log("Format '" + this.format + "' could not be parsed.");
+                    return this._returnZeroElevations();
+            }
+        };
+
+        /**************************************************************************************************************/
+
+
+        /**
+         Fallback elevations when no data was returned
+         */
+        WCSElevationLayer.prototype._returnZeroElevations = function () {
+            var elevations = [];
+            for (var i = 0; i &lt; this.tilePixelSize * this.tilePixelSize; ++i) {
+                elevations.push(0);
+            }
+            return elevations;
+        };
+
+
+        /**************************************************************************************************************/
+
+
+        /**
+         Parse a elevation response from AAIGrid
+         */
+        WCSElevationLayer.prototype._parseAAIGrid = function (text) {
+            var elevations = [];
+            var i;
+            var lines = text.trim().split('\n');
+
+            var dataLinesStart = 0;
+            for (i = 0; i &lt; lines.length; ++i) {
+                if (lines[i].substring(0, 1) === " ") {
+                    dataLinesStart = i;
+                    break;
+                }
+            }
+
+            for (i = dataLinesStart; i &lt; lines.length; i++) {
+                var elts = lines[i].trim().split(/\s+/);
+                for (var n = 0; n &lt; elts.length; n++) {
+                    var elevation = parseInt(elts[n]);
+                    if (elevation &lt; this.minElevation)
+                        elevation = this.minElevation;
+                    elevations.push(elevation * this.scale);
+                }
+            }
+
+            return elevations;
+        };
+
+
+        /**************************************************************************************************************/
+
+        /**
+         Get an url for the given tile
+         */
+        WCSElevationLayer.prototype.getUrl = function (tile) {
+            var geoBound = tile.geoBound;
+            var url = this.getCoverageBaseUrl;
+
+            if (this.version.substring(0, 3) === '2.0') {
+                url += '&amp;subset=x,' + this.crs + '(' + geoBound.west + ',' + geoBound.east + ')';
+                url += '&amp;subset=y,' + this.crs + '(' + geoBound.south + ',' + geoBound.north + ')';
+            }
+            else if (this.version.substring(0, 3) === '1.0') {
+                url += "&amp;bbox=";
+                url += geoBound.west;
+                url += ",";
+                url += geoBound.south;
+                url += ",";
+                url += geoBound.east;
+                url += ",";
+                url += geoBound.north;
+            }
+
+            return url;
+        };
+
+        /**************************************************************************************************************/
+
+        return WCSElevationLayer;
+
+    });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AitoffCoordinateSystem.html">AitoffCoordinateSystem</a></li><li><a href="AtmosphereLayer.html">AtmosphereLayer</a></li><li><a href="AugustCoordinateSystem.html">AugustCoordinateSystem</a></li><li><a href="BaseLayer.html">BaseLayer</a></li><li><a href="BingLayer.html">BingLayer</a></li><li><a href="CoordinateGridLayer.html">CoordinateGridLayer</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="CoordinateSystemFactory.html">CoordinateSystemFactory</a></li><li><a href="EclipticCoordinateSystem.html">EclipticCoordinateSystem</a></li><li><a href="EquatorialCoordinateSystem.html">EquatorialCoordinateSystem</a></li><li><a href="GalacticCoordinateSystem.html">GalacticCoordinateSystem</a></li><li><a href="Globe.html">Globe</a></li><li><a href="GroundOverlayLayer.html">GroundOverlayLayer</a></li><li><a href="HEALPixFITSLayer.html">HEALPixFITSLayer</a></li><li><a href="HEALPixLayer.html">HEALPixLayer</a></li><li><a href="ICRSCoordinateSystem.html">ICRSCoordinateSystem</a></li><li><a href="LayerFactory.html">LayerFactory</a></li><li><a href="MercatorCoordinateSystem.html">MercatorCoordinateSystem</a></li><li><a href="Mizar.html">Mizar</a></li><li><a href="MocLayer.html">MocLayer</a></li><li><a href="MollweideCoordinateSystem.html">MollweideCoordinateSystem</a></li><li><a href="OpenSearchLayer.html">OpenSearchLayer</a></li><li><a href="OSMLayer.html">OSMLayer</a></li><li><a href="PlanetLayer.html">PlanetLayer</a></li><li><a href="PlateCoordinateSystem.html">PlateCoordinateSystem</a></li><li><a href="ProjectionFactory.html">ProjectionFactory</a></li><li><a href="RasterLayer.html">RasterLayer</a></li><li><a href="Sky.html">Sky</a></li><li><a href="SuperGalacticCoordinateSystem.html">SuperGalacticCoordinateSystem</a></li><li><a href="TileWireframeLayer.html">TileWireframeLayer</a></li><li><a href="VectorLayer.html">VectorLayer</a></li><li><a href="WCSElevationLayer.html">WCSElevationLayer</a></li><li><a href="WGS84CoordinateSystem.html">WGS84CoordinateSystem</a></li><li><a href="WMSElevationLayer.html">WMSElevationLayer</a></li><li><a href="WMSLayer.html">WMSLayer</a></li><li><a href="WMTSLayer.html">WMTSLayer</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Oct 05 2016 14:36:19 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

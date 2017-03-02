@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: gui/Histogram.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: gui/Histogram.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*******************************************************************************
+ * Copyright 2012-2015 CNES - CENTRE NATIONAL d'ETUDES SPATIALES
+ *
+ * This file is part of SITools2.
+ *
+ * SITools2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SITools2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SITools2. If not, see &lt;http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+/*global define: false */
+
+/**
+ * Histogram module : create histogram to the given image
+ */
+define(["gui_core/HistogramCore"], function (HistogramCore) {
+
+    // Private variables
+    //var nbBins;
+
+    //var hist = [];
+    //var hmax; // histogram max to scale in image space
+
+    // Origin histogram point
+    //var originX = 5.;
+    //var originY;
+    //var hwidth;
+    //var paddingBottom = 15.;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    TODO: split on HistogramView and Histogram
+     *    Histogram contructor
+     *    @param options Histogram options
+     *        &lt;ul>
+     *            &lt;li>image: The image which is represented by current histogram(required)&lt;/li>
+     *            &lt;li>nbBins: Number of bins, representing the sampling of histogram(optional)&lt;/li>
+     *            &lt;li>onUpdate: On update callback
+     *            &lt;li>accuracy: The accuracy of histogram(numbers after floating point)
+     *        &lt;/ul>
+     */
+    var Histogram = function (options) {
+        //nbBins = options.nbBins || 256;
+        this.image = options.image;
+        this.onUpdate = options.onUpdate;
+        this.accuracy = options.accuracy || 6;
+
+        HistogramCore.init(options);
+
+        // Init canvas
+        var canvas = document.getElementById(options.canvas);
+        this.ctx = canvas.getContext('2d');
+
+        HistogramCore.initThresholds();
+
+        //// Init origins
+        //originY = canvas.height - paddingBottom;
+        //hwidth = nbBins + originX > canvas.width ? canvas.width : nbBins + originX; // clamp to canvas.width
+        //var triangleHalfWidth = 5;
+        //
+        //this.minThreshold = new Triangle(
+        //    [originX, originY + 1, 0],
+        //    [originX - triangleHalfWidth, originY + paddingBottom - 1, 0],
+        //    [originX + triangleHalfWidth, originY + paddingBottom - 1, 0]
+        //);
+        //
+        //this.maxThreshold = new Triangle(
+        //    [hwidth, originY + 1, 0],
+        //    [hwidth - triangleHalfWidth, originY + paddingBottom - 1, 0],
+        //    [hwidth + triangleHalfWidth, originY + paddingBottom - 1, 0]
+        //);
+
+
+        // Show bin pointed by mouse
+        var self = this;
+        canvas.addEventListener('mousemove', HistogramCore._handleMouseMove);
+
+        // Handle threshold controller selection
+        canvas.addEventListener('mousedown', HistogramCore._handleMouseDown);
+
+        // Update histogram on mouseup
+        canvas.addEventListener('mouseup', HistogramCore._handleMouseUp);
+    };
+
+    /**************************************************************************************************************/
+
+    /**
+     *    Get histogram value from the given X-position on canvas
+     */
+    Histogram.prototype.getHistValue = HistogramCore.getHistValue;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    Draw threshold controls(two triangles which represents min/max of current histogram)
+     */
+    Histogram.prototype.drawThresholdControls = HistogramCore.drawThresholdControls;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    Draw histogram
+     */
+    Histogram.prototype.drawHistogram = HistogramCore.drawHistogram;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    Draw histogram axis
+     */
+    Histogram.prototype.drawAxes = HistogramCore.drawAxes;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    Draw transfer function(linear, log, asin, sqrt, sqr)
+     */
+    Histogram.prototype.drawTransferFunction = HistogramCore.drawTransferFunction;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    Draw the histogram in canvas
+     */
+    Histogram.prototype.draw = HistogramCore.draw;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    TODO : create different module
+     *    Compute histogram values
+     */
+    Histogram.prototype.compute = HistogramCore.compute;
+
+    /**************************************************************************************************************/
+
+    /**
+     *    Set image
+     */
+    Histogram.prototype.setImage = HistogramCore.setImage;
+
+    /**************************************************************************************************************/
+
+    return Histogram;
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DynamicImageView%2520constructor%250A%2520%2520%2520Creates%2520jQuery%2520view%2520of%2520the%2520given%2520_GlobWeb.DynamicImage_.html">DynamicImageView constructor
+   Creates jQuery view of the given <GlobWeb.DynamicImage></a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#addImage">addImage</a></li><li><a href="global.html#addLayer">addLayer</a></li><li><a href="global.html#addPickableLayer">addPickableLayer</a></li><li><a href="global.html#addProgressBar">addProgressBar</a></li><li><a href="global.html#addService">addService</a></li><li><a href="global.html#addView">addView</a></li><li><a href="global.html#createHelp">createHelp</a></li><li><a href="global.html#deactivate">deactivate</a></li><li><a href="global.html#focusFeature">focusFeature</a></li><li><a href="global.html#hide">hide</a></li><li><a href="global.html#hideImage">hideImage</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#isInitialized">isInitialized</a></li><li><a href="global.html#onModeToggle">onModeToggle</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#removeImage">removeImage</a></li><li><a href="global.html#removeLayer">removeLayer</a></li><li><a href="global.html#removePickableLayer">removePickableLayer</a></li><li><a href="global.html#removeService">removeService</a></li><li><a href="global.html#removeView">removeView</a></li><li><a href="global.html#selectLayer">selectLayer</a></li><li><a href="global.html#setContext">setContext</a></li><li><a href="global.html#show">show</a></li><li><a href="global.html#showImage">showImage</a></li><li><a href="global.html#toggleMode">toggleMode</a></li><li><a href="global.html#unregisterEvents">unregisterEvents</a></li><li><a href="global.html#updateContext">updateContext</a></li><li><a href="global.html#updateUI">updateUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Aug 26 2016 10:13:35 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

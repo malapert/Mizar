@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: CoordinateSystem/CoordinateSystemFactory.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: CoordinateSystem/CoordinateSystemFactory.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>define([ "./WGS84CoordinateSystem","./EquatorialCoordinateSystem","./EclipticCoordinateSystem",
+          "./GalacticCoordinateSystem","./SuperGalacticCoordinateSystem","./ICRSCoordinateSystem"],
+    function (WGS84CoordinateSystem,EquatorialCoordinateSystem,EclipticCoordinateSystem,
+            GalacticCoordinateSystem,SuperGalacticCoordinateSystem,ICRSCoordinateSystem) {
+    /**
+     @name CoordinateSystemFactory
+     @class
+        Factory for coordinate system
+     @constructor
+     */
+    var CoordinateSystemFactory = function () {
+    };
+
+    /**
+     Create and get a WGS84 coordinate system
+     @function createWGS84
+     @memberof CoordinateSystemFactory.prototype
+     @param options Configuration properties. See {@link WGS84CoordinateSystem} for properties.
+     @example TODO
+    */
+    CoordinateSystemFactory.prototype.createWGS84 = function (options) {
+        // Check option HERE
+        cs = new WGS84CoordinateSystem(options);
+        return cs;
+    };
+
+    /**
+     Create and get an Equatorial coordinate system
+     @function createEquatorial
+     @memberof CoordinateSystemFactory.prototype
+     @param options Configuration properties. See {@link EquatorialCoordinateSystem} for properties.
+     @example TODO
+    */
+    CoordinateSystemFactory.prototype.createEquatorial = function (options) {
+        // Check option HERE
+        cs = new EquatorialCoordinateSystem(options);
+        return cs;
+    };
+
+    /**
+     Create and get an Ecliptic coordinate system
+     @function createEcliptic
+     @memberof CoordinateSystemFactory.prototype
+     @param options Configuration properties. See {@link EclipticCoordinateSystem} for properties.
+     @example TODO
+    */
+    CoordinateSystemFactory.prototype.createEcliptic = function () {
+        // Check option HERE
+        cs = new EclipticCoordinateSystem();
+        return cs;
+    };
+
+    /**
+     Create and get a Galactic coordinate system
+     @function createGalactic
+     @memberof CoordinateSystemFactory.prototype
+     @param options Configuration properties. See {@link GalacticCoordinateSystem} for properties.
+     @example TODO
+    */
+    CoordinateSystemFactory.prototype.createGalactic = function (options) {
+        // Check option HERE
+        cs = new GalacticCoordinateSystem(options);
+        return cs;
+    };
+
+    /**
+     Create and get a Super Galactic coordinate system
+     @function createSuperGalactic
+     @memberof CoordinateSystemFactory.prototype
+     @param options Configuration properties. See {@link SuperGalacticCoordinateSystem} for properties.
+     @example TODO
+    */
+    CoordinateSystemFactory.prototype.createSuperGalactic = function (options) {
+        // Check option HERE
+        cs = new SuperGalacticCoordinateSystem(options);
+        return cs;
+    };
+
+    /**
+     Create and get an ICRS coordinate system
+     @function createICRS
+     @memberof CoordinateSystemFactory.prototype
+     @param options Configuration properties. See {@link ICRSCoordinateSystem} for properties.
+     @example TODO
+    */
+    CoordinateSystemFactory.prototype.createICRS = function (options) {
+        // Check option HERE
+        cs = new ICRSCoordinateSystem(options);
+        return cs;
+    };
+
+    /**
+     Get capabilities of factory
+     @function getCapabilities
+     @memberof CoordinateSystemFactory.prototype
+     @example TODO
+    */
+    CoordinateSystemFactory.prototype.getCapabilities = function() {
+        // TODO
+        capabilities = [
+          { method : "createAitoff",
+            parameters : []},
+          { method : "createAugust",
+            parameters : []},
+          { method : "createMercator",
+            parameters : [{mandatory:"no" , name:"lambda0" , type:"Float", desc:"TODO"}]},
+          { method : "createMollweide",
+            parameters : []},
+          { method : "createPlate",
+            parameters : []},
+        ];
+    };
+
+
+
+    /**************************************************************************************************************/
+
+    return CoordinateSystemFactory;
+
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AitoffCoordinateSystem.html">AitoffCoordinateSystem</a></li><li><a href="AtmosphereLayer.html">AtmosphereLayer</a></li><li><a href="AugustCoordinateSystem.html">AugustCoordinateSystem</a></li><li><a href="BaseLayer.html">BaseLayer</a></li><li><a href="BingLayer.html">BingLayer</a></li><li><a href="CoordinateGridLayer.html">CoordinateGridLayer</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="CoordinateSystemFactory.html">CoordinateSystemFactory</a></li><li><a href="EclipticCoordinateSystem.html">EclipticCoordinateSystem</a></li><li><a href="EquatorialCoordinateSystem.html">EquatorialCoordinateSystem</a></li><li><a href="GalacticCoordinateSystem.html">GalacticCoordinateSystem</a></li><li><a href="Globe.html">Globe</a></li><li><a href="GroundOverlayLayer.html">GroundOverlayLayer</a></li><li><a href="HEALPixFITSLayer.html">HEALPixFITSLayer</a></li><li><a href="HEALPixLayer.html">HEALPixLayer</a></li><li><a href="ICRSCoordinateSystem.html">ICRSCoordinateSystem</a></li><li><a href="LayerFactory.html">LayerFactory</a></li><li><a href="MercatorCoordinateSystem.html">MercatorCoordinateSystem</a></li><li><a href="Mizar.html">Mizar</a></li><li><a href="MocLayer.html">MocLayer</a></li><li><a href="MollweideCoordinateSystem.html">MollweideCoordinateSystem</a></li><li><a href="OpenSearchLayer.html">OpenSearchLayer</a></li><li><a href="OSMLayer.html">OSMLayer</a></li><li><a href="PlanetLayer.html">PlanetLayer</a></li><li><a href="PlateCoordinateSystem.html">PlateCoordinateSystem</a></li><li><a href="ProjectionFactory.html">ProjectionFactory</a></li><li><a href="RasterLayer.html">RasterLayer</a></li><li><a href="Sky.html">Sky</a></li><li><a href="SuperGalacticCoordinateSystem.html">SuperGalacticCoordinateSystem</a></li><li><a href="TileWireframeLayer.html">TileWireframeLayer</a></li><li><a href="VectorLayer.html">VectorLayer</a></li><li><a href="WCSElevationLayer.html">WCSElevationLayer</a></li><li><a href="WGS84CoordinateSystem.html">WGS84CoordinateSystem</a></li><li><a href="WMSElevationLayer.html">WMSElevationLayer</a></li><li><a href="WMSLayer.html">WMSLayer</a></li><li><a href="WMTSLayer.html">WMTSLayer</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Oct 05 2016 14:36:19 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

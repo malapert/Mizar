@@ -1,0 +1,17 @@
+{
+  "name": "virtualgeoweb-testserver",
+  "version": "1.0.0",
+  "description": "A http server for VirtualGeo Web validation",
+  "main": "index.js",
+  "dependencies": {
+    "body-parser": "^1.14.2",
+    "express": "^4.13.3",
+    "express-http-proxy": "^0.6.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

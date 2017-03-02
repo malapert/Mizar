@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Layer/LayerFactory.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Layer/LayerFactory.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>define([ "./WMSLayer","./WMTSLayer","./WCSElevationLayer","./VectorLayer",
+          "./AtmosphereLayer","./BingLayer","./GroundOverlayLayer","./OSMLayer",
+          "./TileWireframeLayer","./CoordinateGridLayer",
+          "./HEALPixFITSLayer",
+          "./HEALPixLayer",
+          "./MocLayer",
+          "./OpenSearchLayer",
+          "./PlanetLayer",
+          "./WMSElevationLayer"
+        ],
+    function (WMSLayer,WMTSLayer,WCSElevationLayer,VectorLayer,AtmosphereLayer,
+      BingLayer,GroundOverlayLayer,OSMLayer,TileWireframeLayer,CoordinateGridLayer,
+      HEALPixFITSLayer,
+      HEALPixLayer,
+      MocLayer,
+      OpenSearchLayer,
+      PlanetLayer,
+      WMSElevationLayer
+    ) {
+
+    /**
+     @name LayerFactory
+     @class
+     Layer Factory
+    */
+    var LayerFactory = function () {
+    };
+
+    /**
+     Create and get a WMS Layer
+     @function createWMS
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the wms layer. See {@link WMSLayer} for properties
+    */
+    LayerFactory.prototype.createWMS = function (options) {
+        // Check option HERE
+        layer = new WMSLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a WCS Elevation Layer
+     @function createWCSElevation
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the WCS elevation layer. See {@link WCSElevationLayer} for properties
+    */
+    LayerFactory.prototype.createWCSElevation = function (options) {
+        // Check option HERE
+        layer = new WCSElevationLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a vector Layer
+     @function createVector
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the vector layer. See {@link VectorLayer} for properties
+    */
+    LayerFactory.prototype.createVector = function () {
+        // Check option HERE
+        layer = new VectorLayer();
+        return layer;
+    };
+
+    /**
+     Create and get an Atmosphere Layer
+     @function createAtmosphere
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the atmosphere layer. See {@link AtmosphereLayer} for properties
+    */
+    LayerFactory.prototype.createAtmosphere = function (options) {
+        // Check option HERE
+        layer = new AtmosphereLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a WMTS Layer
+     @function createWMTS
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the WMTS layer. See {@link WMTSLayer} for properties
+    */
+    LayerFactory.prototype.createWMTS = function (options) {
+        // Check option HERE
+        layer = new WMTSLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a Bing Layer
+     @function createBing
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the Bng layer. See {@link BingLayer} for properties
+    */
+    LayerFactory.prototype.createBing = function () {
+        // Check option HERE
+        layer = new BingLayer();
+        return layer;
+    };
+
+    /**
+     Create and get a Ground Overlay Layer
+     @function createGroundOverlay
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the ground overlay layer. See {@link GroundOverlayLayer} for properties
+    */
+    LayerFactory.prototype.createGroundOverlay = function (options) {
+        // Check option HERE
+        layer = new GroundOverlayLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get an OpenStreetMap Layer
+     @function createOSM
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the OpenStreetMap layer. See {@link OSMLayer} for properties
+    */
+    LayerFactory.prototype.createOSM = function (options) {
+        // Check option HERE
+        layer = new OSMLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a Tile Wire Frame Layer
+     @function createTileWireframe
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the tile wire frame layer. See {@link TileWireframeLayer} for properties
+    */
+    LayerFactory.prototype.createTileWireframe = function (options) {
+        // Check option HERE
+        layer = new TileWireframeLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a coordinate grid Layer
+     @function createCoordinateGridLayer
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the coordinate grid layer. See {@link CoordinateGridLayer} for properties
+    */
+    LayerFactory.prototype.createCoordinateGridLayer = function (options) {
+        // Check option HERE
+        layer = new CoordinateGridLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a HealPix FITS Layer
+     @function createHEALPixFITSLayer
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the HealPix FITS layer. See {@link HEALPixFITSLayer} for properties
+    */
+    LayerFactory.prototype.createHEALPixFITSLayer = function (options) {
+        // Check option HERE
+        layer = new HEALPixFITSLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a HealPix Layer
+     @function createHEALPixLayer
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the HealPix layer. See {@link HEALPixLayer} for properties
+    */
+    LayerFactory.prototype.createHEALPixLayer = function (options) {
+        // Check option HERE
+        layer = new HEALPixLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a MOC Layer
+     @function createMocLayer
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the MOC layer. See {@link MocLayer} for properties
+    */
+    LayerFactory.prototype.createMocLayer = function (options) {
+        // Check option HERE
+        layer = new MocLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get an OpenSearch Layer
+     @function createOpenSearchLayer
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the OpenSearch layer. See {@link OpenSearchLayer} for properties
+    */
+    LayerFactory.prototype.createOpenSearchLayer = function (options) {
+        // Check option HERE
+        layer = new OpenSearchLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a Planet Layer
+     @function createPlanetLayer
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the Planet layer. See {@link PlanetLayer} for properties
+    */
+    LayerFactory.prototype.createPlanetLayer = function (options) {
+        // Check option HERE
+        layer = new PlanetLayer(options);
+        return layer;
+    };
+
+    /**
+     Create and get a WMS Elevation Layer
+     @function createWMSElevationLayer
+     @memberof LayerFactory.prototype
+     @param options Configuration properties for the WMS Elevation layer. See {@link WMSElevationLayer} for properties
+    */
+    LayerFactory.prototype.createWMSElevationLayer = function (options) {
+        // Check option HERE
+        layer = new WMSElevationLayer(options);
+        return layer;
+    };
+
+    /**
+     Get capabilities of factory
+     @function getCapabilities
+     @memberof LayerFactory.prototype
+    */
+    LayerFactory.prototype.getCapabilities = function() {
+        capabilities = [
+          { protocol : "WMS",
+            method : "createWMS",
+            parameters : [
+                {mandatory:"yes", name:"baseUrl" , type:"String", desc:"URL of the WMS server"},
+                {mandatory:"yes", name:"layers"  , type:"String", desc:"List of Layers names, separated with comma"},]},
+          { protocol : "WCS",
+            method : "createWCSElevation",
+            parameters : [
+                {mandatory:"yes", name:"baseUrl"  , type:"String", desc:"URL of the WCS server"},
+                {mandatory:"yes", name:"coverage" , type:"String", desc:"Name of the layer"},
+                {mandatory:"no" , name:"version"  , type:"String", desc:"Version of the protocol"},]},
+          { protocol : "",
+              method : "createVector",
+              parameters : []},
+          { protocol : "",
+            method : "createAtmosphere",
+            parameters : [
+                {mandatory:"no" , name:"kr"             , type:"Float",         desc:"TODO"},
+                {mandatory:"no" , name:"km"             , type:"Float",         desc:"TODO"},
+                {mandatory:"no" , name:"sunBrightness"  , type:"Float",         desc:"TODO"},
+                {mandatory:"no" , name:"exposure"       , type:"Float",         desc:"TODO"},
+                {mandatory:"no" , name:"wavelength"     , type:"ArrayOfFloat",  desc:"TODO"},
+                {mandatory:"no" , name:"lightDir"       , type:"Float",         desc:"TODO"},]},
+          { protocol : "WMTS",
+            method : "createWMTS",
+            parameters : [
+                {mandatory:"yes", name:"baseUrl"        , type:"String",  desc:"URL of the WTMS server"},
+                {mandatory:"no" , name:"tilePixelSize"  , type:"Integer", desc:"TODO"},
+                {mandatory:"no" , name:"numberOfLevels" , type:"Integer", desc:"TODO"},
+                {mandatory:"no" , name:"startLevel"     , type:"Integer", desc:"TODO"},]},
+          { protocol : "BING",
+            method : "createBing",
+            parameters : []},
+          { protocol : "",
+            method : "createGroundOverlay",
+            parameters : [
+                {mandatory:"yes", name:"image" , type:"String",  desc:"URL of the image"},]},
+          { protocol : "OSM",
+            method : "createOSM",
+            parameters : [
+                {mandatory:"yes", name:"baseUrl"        , type:"String",  desc:"URL of the OSM server"},
+                {mandatory:"no" , name:"tilePixelSize"  , type:"Integer", desc:"TODO"},
+                {mandatory:"no" , name:"baseLevel"      , type:"Integer", desc:"TODO"},
+                {mandatory:"no" , name:"numberOfLevels" , type:"Integer", desc:"TODO"},]},
+          { protocol : "",
+            method : "createTileWireframe",
+            parameters : [
+                {mandatory:"no" , name:"outline" , type:"Boolean", desc:"TODO"},
+                {mandatory:"no" , name:"color"   , type:"Color", desc:"TODO"},]},
+          { protocol : "",
+            method : "createCoordinateGridLayer",
+            parameters : [
+                {mandatory:"no",  name:"longitudeSample", type:"Integer",   desc:"TODO", default:15},
+                {mandatory:"no",  name:"latitudeSample",  type:"Integer",   desc:"TODO", default:10},
+                {mandatory:"no" , name:"color"   ,        type:"Color",     desc:"TODO", default:"[1.,1.,1.]"},
+                {mandatory:"no" , name:"coordSystem"  ,   type:"String",    desc:"TODO", default:"EQ"},
+                {mandatory:"no" , name:"longFormat"  ,    type:"String",    desc:"TODO", default:"Deg"},
+                {mandatory:"no" , name:"latFormat"  ,     type:"String",    desc:"TODO", default:"Deg"},
+                {mandatory:"no" , name:"tesselation"  ,   type:"Integer",   desc:"TODO", default:"2"}]},
+          { protocol : "",
+            method : "createHEALPixFITSLayer",
+            parameters : [
+                {mandatory:"no",  name:"tilePixelSize", type:"Integer",   desc:"TODO", default:512},
+                {mandatory:"no",  name:"baseLevel",     type:"Integer",   desc:"TODO", default:2},
+                {mandatory:"no" , name:"numberOfLevels",type:"Integer",   desc:"TODO", default:10},
+                {mandatory:"no" , name:"format"  ,      type:"String",    desc:"TODO", default:"fits"},
+                {mandatory:"no" , name:"coordSystem"  , type:"String",    desc:"TODO", default:"EQ"}]},
+          { protocol : "",
+            method : "createHEALPixLayer",
+            parameters : [
+                {mandatory:"no",  name:"tilePixelSize", type:"Integer",   desc:"TODO", default:512},
+                {mandatory:"no",  name:"baseLevel",     type:"Integer",   desc:"TODO", default:2},
+                {mandatory:"no" , name:"numberOfLevels",type:"Integer",   desc:"TODO", default:10},
+                {mandatory:"yes", name:"baseUrl",       type:"String",    desc:"TODO"},
+                {mandatory:"no" , name:"format"  ,      type:"String",    desc:"TODO", default:"jpg"},
+                {mandatory:"no" , name:"coordSystem"  , type:"String",    desc:"TODO" ,default:"EQ"},
+                {mandatory:"no" , name:"onready"      , type:"Function",  desc:"Callback function"}]},
+          { protocol : "MOC",
+            method : "createMOCLayer",
+            parameters : [
+                {mandatory:"yes", name:"serviceUrl"  ,  type:"String",    desc:"URL of MOC Service"},
+                {mandatory:"no" , name:"startOrder"  ,  type:"Integer",   desc:"TODO" ,default:"2"},
+                {mandatory:"no" , name:"style"       ,  type:"JSON?",  desc:""}]},
+          { protocol : "OpenSearch",
+            method : "createOpenSearchLayer",
+            parameters : [
+                {mandatory:"yes", name:"serviceUrl"  ,        type:"String",    desc:"URL of OpenSearch Service"},
+                {mandatory:"no" , name:"minOrder"  ,          type:"Integer",   desc:"TODO" , default:"5"},
+                {mandatory:"no" , name:"maxRequests" ,        type:"Integer",   desc:"",      default:2},
+                {mandatory:"no" , name:"invertY"     ,        type:"Boolean",   desc:"",      default:false},
+                {mandatory:"no" , name:"coordSystemRequired", type:"Boolean",   desc:"",      default:true},
+                {mandatory:"no" , name:"style"       ,        type:"JSON?",     desc:""}]},
+          { protocol : "",
+            method : "createPlanetLayer",
+            parameters : [
+                {mandatory:"yes", name:"name"  ,        type:"String",  desc:"Name"},
+                {mandatory:"no" , name:"nameResolver"  ,type:"Integer", desc:"TODO"},
+                {mandatory:"yes", name:"baseImageries", type:"Array",   desc:"TODO"},
+                {mandatory:"no",  name:"elevation",     type:"JSON",    desc:"TODO"}]},
+          { protocol : "",
+            method : "createWMSElevationLayer",
+            parameters : [
+                {mandatory:"no" , name:"tilePixelSize",type:"Integer",desc:"TODO", default:33}]},
+          ];
+    };
+
+    /**************************************************************************************************************/
+
+    return LayerFactory;
+
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AitoffCoordinateSystem.html">AitoffCoordinateSystem</a></li><li><a href="AtmosphereLayer.html">AtmosphereLayer</a></li><li><a href="AugustCoordinateSystem.html">AugustCoordinateSystem</a></li><li><a href="BaseLayer.html">BaseLayer</a></li><li><a href="BingLayer.html">BingLayer</a></li><li><a href="CoordinateGridLayer.html">CoordinateGridLayer</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="CoordinateSystemFactory.html">CoordinateSystemFactory</a></li><li><a href="EclipticCoordinateSystem.html">EclipticCoordinateSystem</a></li><li><a href="EquatorialCoordinateSystem.html">EquatorialCoordinateSystem</a></li><li><a href="GalacticCoordinateSystem.html">GalacticCoordinateSystem</a></li><li><a href="Globe.html">Globe</a></li><li><a href="GroundOverlayLayer.html">GroundOverlayLayer</a></li><li><a href="HEALPixFITSLayer.html">HEALPixFITSLayer</a></li><li><a href="HEALPixLayer.html">HEALPixLayer</a></li><li><a href="ICRSCoordinateSystem.html">ICRSCoordinateSystem</a></li><li><a href="LayerFactory.html">LayerFactory</a></li><li><a href="MercatorCoordinateSystem.html">MercatorCoordinateSystem</a></li><li><a href="Mizar.html">Mizar</a></li><li><a href="MocLayer.html">MocLayer</a></li><li><a href="MollweideCoordinateSystem.html">MollweideCoordinateSystem</a></li><li><a href="OpenSearchLayer.html">OpenSearchLayer</a></li><li><a href="OSMLayer.html">OSMLayer</a></li><li><a href="PlanetLayer.html">PlanetLayer</a></li><li><a href="PlateCoordinateSystem.html">PlateCoordinateSystem</a></li><li><a href="ProjectionFactory.html">ProjectionFactory</a></li><li><a href="RasterLayer.html">RasterLayer</a></li><li><a href="Sky.html">Sky</a></li><li><a href="SuperGalacticCoordinateSystem.html">SuperGalacticCoordinateSystem</a></li><li><a href="TileWireframeLayer.html">TileWireframeLayer</a></li><li><a href="VectorLayer.html">VectorLayer</a></li><li><a href="WCSElevationLayer.html">WCSElevationLayer</a></li><li><a href="WGS84CoordinateSystem.html">WGS84CoordinateSystem</a></li><li><a href="WMSElevationLayer.html">WMSElevationLayer</a></li><li><a href="WMSLayer.html">WMSLayer</a></li><li><a href="WMTSLayer.html">WMTSLayer</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Oct 05 2016 14:36:19 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

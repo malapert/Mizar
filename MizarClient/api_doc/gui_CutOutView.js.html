@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: gui/CutOutView.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: gui/CutOutView.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*******************************************************************************
+ * Copyright 2012-2015 CNES - CENTRE NATIONAL d'ETUDES SPATIALES
+ *
+ * This file is part of SITools2.
+ *
+ * SITools2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SITools2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SITools2. If not, see &lt;http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+
+/*global define: false */
+
+define(["jquery", "gui_core/SelectionToolCore", "uws_core/UWSManager", "service_gui2/Samp", "uws/AnimatedButton", "gui_core/dialog/ErrorDialog", "underscore-min", "text!../../templates/cutOut.html", "text!../../templates/cutResultItem.html", "jquery.ui"],
+    function ($, SelectionToolCore, UWSManager, Samp, AnimatedButton, ErrorDialog, _, cutOutHTMLTemplate, cutResultHTMLTemplate) {
+
+// Template generating UWS services div
+        var cutOutTemplate = _.template(cutOutHTMLTemplate);
+
+// Template generating the cutOut result li
+        var cutResultTemplate = _.template(cutResultHTMLTemplate);
+
+        /**
+         * UWS CutOut View
+         */
+        var CutOutView = function (element, selectionTool, pickingManager) {
+            this.pickingManager = pickingManager;
+            // Initialize selection tool
+            this.selectionTool = selectionTool;
+
+            var cutOutContent = cutOutTemplate();
+            var self = this;
+            $('#' + element).html("");
+            this.$content = $(cutOutContent)
+                .appendTo('#' + element)
+                .find('#selectionTool')
+                .button()
+                .click(function () {
+                    self.$content.slideUp();
+                    // Deactivate picking events
+                    self.pickingManager.deactivate();
+                    self.selectionTool.toggle();
+                }).end()
+                .find('#clearSelection')
+                .button()
+                .click(function () {
+                    self.selectionTool.clear();
+                }).end();
+
+            this.runButton = new AnimatedButton($('#' + element).find('#runJob')[0], {
+                onclick: $.proxy(this.runJob, this)
+            });
+
+            this.$content.on('click', '.sampExport', function (event) {
+                if (Samp.isConnected()) {
+                    Samp.sendImage($(this).data('url'));
+                }
+                else {
+                    ErrorDialog.open('You must be connected to SAMP Hub');
+                }
+            });
+
+            this.$content.on('click', '.deleteResult', function (event) {
+                var $job = $(this).parent();
+                var jobId = $job.data('jobid');
+
+                UWSManager.delete('cutout', jobId, {
+                    successCallback: function () {
+                        // Remove all job-related results
+                        $job.parent().find('li[data-jobid=' + $job.data('jobid') + ']').each(function () {
+                            $(this).fadeOut(function () {
+                                $(this).remove();
+                            });
+                        });
+                    },
+                    failCallback: function (thrownError) {
+                        console.error(thrownError);
+                        // Fade out anyway
+                        $job.parent().find('li[data-jobid=' + $job.data('jobid') + ']').each(function () {
+                            $(this).fadeOut(function () {
+                                $(this).remove();
+                            });
+                        });
+                    }
+                });
+            });
+        };
+
+        /**************************************************************************************************************/
+
+        /**
+         *    Run job
+         */
+        CutOutView.prototype.runJob = function () {
+            if (this.selectionTool.selectionFeature) {
+                this.runButton.startAnimation();
+
+                var parameters = {
+                    PHASE: "RUN",
+                    uri: this.url,
+                    ra: this.selectionTool.geoPickPoint[0],
+                    dec: this.selectionTool.geoPickPoint[1],
+                    radius: this.selectionTool.geoRadius
+                };
+                var self = this;
+                UWSManager.post('cutout', parameters, {
+                    successCallback: function (response, jobId) {
+                        self.showMessage('Completed');
+                        for (var i = 0; i &lt; response.results.result.length; i++) {
+                            var result = response.results.result[i];
+                            var name = result['@id'];
+                            var url = result['@xlink:href'];
+
+                            //Encode special caracters(at least '?')
+                            if (url.search("[?]") > 0) {
+                                var lastSlash = url.lastIndexOf('/') + 1;
+                                url = url.substr(0, lastSlash) + encodeURIComponent(name);
+                            }
+
+                            var proxyIndex = name.search('file_id=');
+                            var shortName;
+                            if (proxyIndex >= 0) {
+                                shortName = name.substr(proxyIndex + 8);
+                            }
+                            else {
+                                shortName = name;
+                            }
+                            self.runButton.stopAnimation();
+
+                            result = {
+                                name: shortName,
+                                url: url,
+                                jobId: jobId
+                            };
+
+                            var cutOutResult = cutResultTemplate({result: result});
+                            $(cutOutResult)
+                                .appendTo(self.$content.find('.cutoutResults').find('ul'))
+                                .fadeIn(400);
+                        }
+                    },
+                    failCallback: function (error) {
+                        self.runButton.stopAnimation();
+                        self.showMessage(error);
+                    }
+                });
+            }
+            else {
+                this.showMessage('Please, select area to cut');
+            }
+        };
+
+        /**************************************************************************************************************/
+
+        CutOutView.prototype.showMessage = function (message) {
+            this.$content.find('.jobStatus').html(message).stop().slideDown(300).delay(2000).slideUp();
+        };
+
+        /**************************************************************************************************************/
+
+        CutOutView.prototype.setUrl = function (url) {
+            this.url = url;
+        };
+
+        /**************************************************************************************************************/
+
+        return CutOutView;
+
+    });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DynamicImageView%2520constructor%250A%2520%2520%2520Creates%2520jQuery%2520view%2520of%2520the%2520given%2520_GlobWeb.DynamicImage_.html">DynamicImageView constructor
+   Creates jQuery view of the given <GlobWeb.DynamicImage></a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#addImage">addImage</a></li><li><a href="global.html#addLayer">addLayer</a></li><li><a href="global.html#addPickableLayer">addPickableLayer</a></li><li><a href="global.html#addProgressBar">addProgressBar</a></li><li><a href="global.html#addService">addService</a></li><li><a href="global.html#addView">addView</a></li><li><a href="global.html#createHelp">createHelp</a></li><li><a href="global.html#deactivate">deactivate</a></li><li><a href="global.html#focusFeature">focusFeature</a></li><li><a href="global.html#hide">hide</a></li><li><a href="global.html#hideImage">hideImage</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#isInitialized">isInitialized</a></li><li><a href="global.html#onModeToggle">onModeToggle</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#removeImage">removeImage</a></li><li><a href="global.html#removeLayer">removeLayer</a></li><li><a href="global.html#removePickableLayer">removePickableLayer</a></li><li><a href="global.html#removeService">removeService</a></li><li><a href="global.html#removeView">removeView</a></li><li><a href="global.html#selectLayer">selectLayer</a></li><li><a href="global.html#setContext">setContext</a></li><li><a href="global.html#show">show</a></li><li><a href="global.html#showImage">showImage</a></li><li><a href="global.html#toggleMode">toggleMode</a></li><li><a href="global.html#unregisterEvents">unregisterEvents</a></li><li><a href="global.html#updateContext">updateContext</a></li><li><a href="global.html#updateUI">updateUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Aug 26 2016 10:13:35 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

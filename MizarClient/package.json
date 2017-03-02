@@ -1,0 +1,27 @@
+
+{
+  "name": "client-mizar",
+  "version": "1.0.0",
+  "description": "client for Mizar API",
+  "main": "./src/mizar_gui/js/MizarWidgetGui.js",
+  "directories": {
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "jsdoc": "jsdoc -c jsdoc.conf",
+    "test": "echo \"Error: no test specified\" && exit 1",
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://thor.si.c-s.fr/git/mizar"
+  },
+  "keywords": [
+    "astronomy",
+    "mapping",
+    "3D",
+    "2D"
+  ],
+  "author": "C-S",
+  "license": "ISC"
+}
