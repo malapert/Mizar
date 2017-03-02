@@ -41,10 +41,6 @@ define(['../Utils/Utils', './Tile', '../Renderer/GeoBound', './HEALPixBase'], fu
       var vertex = [this.vertices[vo], this.vertices[vo + 1], this.vertices[vo + 2]];
       mat4.multiplyVec3(this.matrix, vertex);
 
-      if (this.config.coordinateSystem.isFlat) {
-        // TODO Fabien
-      }
-
       var geo = this.config.coordinateSystem.from3DToGeo(vertex);
       return geo[2];
   };

@@ -58,7 +58,7 @@ define(['../Projection/FlatCoordinateSystem', '../Utils/Utils','../Utils/Constan
             }
             dest[0] = o;
             dest[1] = this.pole === "south" ? p - 90 : 90 - p;
-            dest[2] = 0.0;
+            dest[2] = position3d[2] / this.geoide.heightScale;
             return dest;
         };
 
@@ -83,7 +83,7 @@ define(['../Projection/FlatCoordinateSystem', '../Utils/Utils','../Utils/Constan
 
 			dest[0] = p * Math.sin(o);
             dest[1] = -p * Math.cos(o);
-            dest[2] = 0.0;
+            dest[2] = geoPos[2] * this.geoide.heightScale;
             return dest;
         };
 

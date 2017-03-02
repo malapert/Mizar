@@ -73,7 +73,7 @@ define(['../Projection/FlatCoordinateSystem', '../Utils/Utils','../Utils/Constan
 
             dest[0] = lambda * 180 / Math.PI;
             dest[1] = phi * 180 / Math.PI;
-            dest[2] = 0.0;
+            dest[2] = position3d[2] / this.geoide.heightScale;
             return dest;
         };
 
@@ -101,7 +101,7 @@ define(['../Projection/FlatCoordinateSystem', '../Utils/Utils','../Utils/Constan
 
             dest[0] = mollX;
             dest[1] = mollY;
-            dest[2] = 0;
+            dest[2] = geoPos[2] * this.geoide.heightScale;
             return dest;
         };
 

@@ -53,7 +53,7 @@ define(['../Projection/FlatCoordinateSystem', '../Utils/Utils','../Utils/Constan
 
             dest[0] = this.lambda0 + position3d[0] * 180 / Math.PI;
             dest[1] = Math.atan(_sinh(position3d[1])) * 180 / Math.PI;
-            dest[2] = 0.0;
+            dest[2] = position3d[2] / this.geoide.heightScale;
 			
 			if (Math.abs(dest[1]) > 85.05)
 				return null;
@@ -89,7 +89,7 @@ define(['../Projection/FlatCoordinateSystem', '../Utils/Utils','../Utils/Constan
 
             dest[0] = x;
             dest[1] = y;
-            dest[2] = 0;
+            dest[2] = geoPos[2] * this.geoide.heightScale;
             return dest;
         };
 
